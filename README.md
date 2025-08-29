@@ -34,10 +34,10 @@ O objetivo é criar um **runner urbano**, onde pets entregadores realizam entreg
 ---
 
 ## 👥 Equipe
-- **Aluno 1** – Programação  
-- **Aluno 2** – Arte 3D / Animação  
-- **Aluno 3** – Arte 2D / UI  
-- **Aluno 4** – Game Design / Documentação  
+- **Andre** – Programação  
+- **Antony** – Arte 3D / Animação  
+- **Nathalia** – Arte 2D / UI  
+- **Lucas** – Game Design / Documentação  
 
 ---
 
