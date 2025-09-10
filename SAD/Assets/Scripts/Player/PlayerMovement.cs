@@ -1,55 +1,3 @@
-/*
- Sugestao de valores para diferentes veículos (testar e ajustar para cada um):
- Patins
-•	baseForwardSpeed: 6
-•	maxForwardSpeed: 12
-•	accelRate: 10
-•	brakeRate: 12
-•	lateralSpeed: 6
-•	lateralAccel: 10
-•	lateralFriction: 8
-•	driftThresholdSpeed: 9
-•	driftLateralMultiplier: 1.1
-•	driftSlowdown: 4
-•	gravity: -20
-•	jumpForce: 9      // Pulo mais alto, ágil
-•	airControlFactor: 0.35
-•	turnBlendTime: 0.25
-•	turnAngleDegrees: 90
-Skate
-•	baseForwardSpeed: 7
-•	maxForwardSpeed: 14
-•	accelRate: 12
-•	brakeRate: 10
-•	lateralSpeed: 5
-•	lateralAccel: 10
-•	lateralFriction: 8
-•	driftThresholdSpeed: 10
-•	driftLateralMultiplier: 1.4
-•	driftSlowdown: 4
-•	gravity: -20
-•	jumpForce: 7.5    // Pulo médio, mais pesado
-•	airControlFactor: 0.3
-•	turnBlendTime: 0.25
-•	turnAngleDegrees: 90
-Patinete
-•	baseForwardSpeed: 8
-•	maxForwardSpeed: 16
-•	accelRate: 14
-•	brakeRate: 9
-•	lateralSpeed: 4
-•	lateralAccel: 10
-•	lateralFriction: 8
-•	driftThresholdSpeed: 11
-•	driftLateralMultiplier: 1.2
-•	driftSlowdown: 4
-•	gravity: -20
-•	jumpForce: 6.5    // Pulo mais baixo, mais pesado
-•	airControlFactor: 0.25
-•	turnBlendTime: 0.25
-•	turnAngleDegrees: 90
- */
-
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -67,62 +15,67 @@ public class PlayerMovement : MonoBehaviour
     public float lateralFriction = 8f;
 
     [Header("Drift/Curva")]
-    public float turnBlendTime = 0.25f;
+    public float turnBlendTime = 0.5f;  // Usado como tempo de curva (ajustado dinamicamente)
     public float driftThresholdSpeed = 9f;
     public float driftLateralMultiplier = 1.1f;
     public float driftSlowdown = 4f;
 
     [Header("Rampa/Gravidade/Pulo")]
     public float gravity = -20f;
-    public float jumpForce = 9f;           // Patins: 9, Skate: 7.5, Patinete: 6.5
-    public float airControlFactor = 0.35f; // Patins: 0.35, Skate: 0.3, Patinete: 0.25
+    public float jumpForce = 9f;
+    public float airControlFactor = 0.35f;
 
-    [Header("Curva por Botão")]
-    public float turnAngleDegrees = 90f;
+    [Header("Turn Settings")]
+    public float minTurnTime = 0.5f; // Tempo mínimo para executar a curva
+    public float maxTurnTime = 1.5f; // Tempo máximo para executar a curva
 
     [Header("Referências")]
     public Transform forwardReference;
 
-    // Variáveis internas
     float currentSpeed;
     float lateralVel;
     float verticalVel;
     bool isGrounded;
 
-    // Variáveis de curva
+    // Curva automática
     bool isTurning = false;
     float turnTimer = 0f;
-    float startYaw;
-    float targetYaw;
-    float currentYaw;
-    float pendingTurn = 0f; // -1 = esquerda, 1 = direita, 2 = 180°
+    Vector3 turnStartPos;
+    Vector3 turnEndPos;
+    Vector3 turnControlPoint;
+    Quaternion startRot;
+    Quaternion endRot;
+    float turnCooldownTimer = 0f;
+    float turnArcLength = 0f; // Comprimento do arco
+    float turnProgress = 0f;  // 0..1
+    float startY; // Altura Y inicial para preservar durante a curva
 
-    // Drift
     bool isDrifting = false;
-
     CharacterController controller;
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
-        if (forwardReference == null) forwardReference = transform;
-        currentSpeed = 0f; // Começa parado
+        if (forwardReference == null)
+            forwardReference = transform;
+        currentSpeed = 0f;
     }
 
     void Update()
     {
-        // Checa se está no chão
+        if (turnCooldownTimer > 0f)
+            turnCooldownTimer -= Time.deltaTime;
+
         isGrounded = controller.isGrounded;
-        if (isGrounded && verticalVel < 0) verticalVel = -1f;
+        if (isGrounded && verticalVel < 0)
+            verticalVel = -1f;
 
-        // Pulo
-        if (isGrounded && Input.GetKeyDown(KeyCode.Space))
-        {
+        bool canInput = !isTurning;
+
+        if (canInput && isGrounded && Input.GetKeyDown(KeyCode.Space))
             verticalVel = jumpForce;
-        }
 
-        // Input lateral
-        float inputX = Input.GetAxis("Horizontal");
+        float inputX = canInput ? Input.GetAxis("Horizontal") : 0f;
         float targetLateral = inputX * lateralSpeed;
         if (isGrounded)
         {
@@ -132,27 +85,23 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            lateralVel = Mathf.MoveTowards(lateralVel, targetLateral * airControlFactor, lateralAccel * airControlFactor * Time.deltaTime);
+            lateralVel = Mathf.MoveTowards(lateralVel, targetLateral * airControlFactor,
+                            lateralAccel * airControlFactor * Time.deltaTime);
         }
 
-        // Input avanço/freio
-        float inputZ = Input.GetAxis("Vertical");
-        bool braking = Input.GetKey(KeyCode.LeftShift) || inputZ < -0.1f;
+        float inputZ = canInput ? Input.GetAxis("Vertical") : 0f;
+        bool braking = canInput && (Input.GetKey(KeyCode.LeftShift) || inputZ < -0.1f);
         if (braking)
-        {
             currentSpeed = Mathf.MoveTowards(currentSpeed, 0, brakeRate * Time.deltaTime);
-        }
         else
         {
             float targetSpeed = 0f;
             if (inputZ > 0.1f)
-                targetSpeed = Mathf.Lerp(0, maxForwardSpeed, inputZ); // acelera até o máximo conforme segura W
-
+                targetSpeed = Mathf.Lerp(0, maxForwardSpeed, inputZ);
             currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, accelRate * Time.deltaTime);
         }
         currentSpeed = Mathf.Clamp(currentSpeed, 0, maxForwardSpeed);
 
-        // Drift simples (corrigido)
         if (currentSpeed > driftThresholdSpeed && braking)
         {
             if (!isDrifting)
@@ -163,57 +112,85 @@ public class PlayerMovement : MonoBehaviour
             currentSpeed = Mathf.MoveTowards(currentSpeed, driftThresholdSpeed, driftSlowdown * Time.deltaTime);
         }
         else
-        {
             isDrifting = false;
-        }
 
-        // Gravidade
         if (!isGrounded)
             verticalVel += gravity * Time.deltaTime;
 
-        // ----------- CURVAS (Q/E/R) -----------
-        // Detecta pedido de curva
-        if (!isTurning)
-        {
-            if (Input.GetKeyDown(KeyCode.Q))
-                pendingTurn = -1f; // Esquerda
-            else if (Input.GetKeyDown(KeyCode.E))
-                pendingTurn = 1f;  // Direita
-            else if (Input.GetKeyDown(KeyCode.R))
-                pendingTurn = 2f;  // Meia-volta
-        }
-
-        // Inicia curva se houver pedido
-        if (!isTurning && pendingTurn != 0f)
-        {
-            isTurning = true;
-            turnTimer = 0f;
-            startYaw = transform.eulerAngles.y;
-            if (pendingTurn == 2f)
-                targetYaw = startYaw + 180f;
-            else
-                targetYaw = startYaw + pendingTurn * turnAngleDegrees;
-            pendingTurn = 0f;
-        }
-
-        // Blend de curva
         if (isTurning)
         {
             turnTimer += Time.deltaTime;
-            float t = Mathf.Clamp01(turnTimer / turnBlendTime);
-            currentYaw = Mathf.LerpAngle(startYaw, targetYaw, t);
-            transform.rotation = Quaternion.Euler(0, currentYaw, 0);
+            turnProgress = Mathf.Clamp01(turnTimer / turnBlendTime);
 
-            if (t >= 1f)
+            Vector3 pos = Mathf.Pow(1 - turnProgress, 2) * turnStartPos +
+                          2 * (1 - turnProgress) * turnProgress * turnControlPoint +
+                          Mathf.Pow(turnProgress, 2) * turnEndPos;
+
+            pos.y = startY;
+
+            controller.enabled = false;
+            transform.position = pos;
+            controller.enabled = true;
+
+            transform.rotation = Quaternion.Slerp(startRot, endRot, turnProgress);
+
+            if (turnProgress >= 1f)
             {
                 isTurning = false;
-                transform.rotation = Quaternion.Euler(0, targetYaw, 0);
+                turnProgress = 0f;
+                transform.rotation = endRot;
             }
         }
-        // ----------- FIM CURVAS -----------
+        else
+        {
+            Vector3 move = forwardReference.forward * currentSpeed +
+                           forwardReference.right * lateralVel +
+                           Vector3.up * verticalVel;
+            controller.Move(move * Time.deltaTime);
+        }
+    }
 
-        // Movimento final
-        Vector3 move = forwardReference.forward * currentSpeed + forwardReference.right * lateralVel + Vector3.up * verticalVel;
-        controller.Move(move * Time.deltaTime);
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("TurnNode") && !isTurning && turnCooldownTimer <= 0f)
+        {
+            TurnNode node = other.GetComponent<TurnNode>();
+            if (node != null && node.targetNode != null)
+            {
+                Vector3 targetDir = node.GetTargetDirection();
+                float angle = Vector3.Angle(transform.forward, targetDir);
+                if (angle < 100f)
+                {
+                    turnStartPos = transform.position;
+                    turnEndPos = node.targetNode.position;
+
+                    startY = transform.position.y;
+                    turnEndPos.y = startY;
+
+                    float arcRadius = Vector3.Distance(new Vector3(turnStartPos.x, 0, turnStartPos.z),
+                                                      new Vector3(turnEndPos.x, 0, turnEndPos.z)) / 2f;
+                    float arcAngle = node.curveAngle; // Por exemplo, 90 ou -90
+                    Vector3 dir = Quaternion.AngleAxis(arcAngle / 2f, Vector3.up) * transform.forward;
+                    turnControlPoint = turnStartPos + dir * arcRadius;
+                    turnControlPoint.y = startY;
+
+                    startRot = transform.rotation;
+                    // Aqui invertemos o ângulo: se desejado for girar para a direita (arcAngle negativo),
+                    // aplicamos -arcAngle para que a rotação final seja correta.
+                    endRot = startRot * Quaternion.Euler(0, -arcAngle, 0);
+
+                    turnArcLength = arcRadius * Mathf.Deg2Rad * Mathf.Abs(arcAngle);
+
+                    float desiredTurnTime = (currentSpeed > 0f) ? (turnArcLength / currentSpeed) : turnBlendTime;
+                    desiredTurnTime = Mathf.Clamp(desiredTurnTime, minTurnTime, maxTurnTime);
+                    turnBlendTime = desiredTurnTime;
+
+                    turnTimer = 0f;
+                    turnProgress = 0f;
+                    isTurning = true;
+                    turnCooldownTimer = node.cooldown;
+                }
+            }
+        }
     }
 }
