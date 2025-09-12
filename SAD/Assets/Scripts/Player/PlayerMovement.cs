@@ -1,219 +1,180 @@
 /*
- Sugestao de valores para diferentes veículos (testar e ajustar para cada um):
- Patins
-•	baseForwardSpeed: 6
-•	maxForwardSpeed: 12
-•	accelRate: 10
-•	brakeRate: 12
-•	lateralSpeed: 6
-•	lateralAccel: 10
-•	lateralFriction: 8
-•	driftThresholdSpeed: 9
-•	driftLateralMultiplier: 1.1
-•	driftSlowdown: 4
-•	gravity: -20
-•	jumpForce: 9      // Pulo mais alto, ágil
-•	airControlFactor: 0.35
-•	turnBlendTime: 0.25
-•	turnAngleDegrees: 90
-Skate
-•	baseForwardSpeed: 7
-•	maxForwardSpeed: 14
-•	accelRate: 12
-•	brakeRate: 10
-•	lateralSpeed: 5
-•	lateralAccel: 10
-•	lateralFriction: 8
-•	driftThresholdSpeed: 10
-•	driftLateralMultiplier: 1.4
-•	driftSlowdown: 4
-•	gravity: -20
-•	jumpForce: 7.5    // Pulo médio, mais pesado
-•	airControlFactor: 0.3
-•	turnBlendTime: 0.25
-•	turnAngleDegrees: 90
-Patinete
-•	baseForwardSpeed: 8
-•	maxForwardSpeed: 16
-•	accelRate: 14
-•	brakeRate: 9
-•	lateralSpeed: 4
-•	lateralAccel: 10
-•	lateralFriction: 8
-•	driftThresholdSpeed: 11
-•	driftLateralMultiplier: 1.2
-•	driftSlowdown: 4
-•	gravity: -20
-•	jumpForce: 6.5    // Pulo mais baixo, mais pesado
-•	airControlFactor: 0.25
-•	turnBlendTime: 0.25
-•	turnAngleDegrees: 90
- */
+    Sistema de movimento com inércia, drift e boost estilo arcade.
+
+    - O movimento é baseado em um vetor de momentum, simulando física de AddForce.
+    - Ao segurar W, o jogador acelera gradualmente na direção da câmera, acumulando momentum.
+    - Se a câmera gira, o momentum não muda instantaneamente, criando efeito de deslizamento/inércia.
+    - Ao soltar W, o momentum desacelera suavemente (slideDeceleration).
+    - Shift pode ser usado de duas formas:
+        - Com W e velocidade acima do threshold: ativa drift, reduz velocidade e realinha momentum mais rápido à direção atual, acumulando boost proporcional ao tempo em drift.
+        - Sem W: funciona como freio, reduzindo momentum mais rapidamente.
+    - Ao soltar o drift, o boost acumulado é adicionado ao momentum e decai gradualmente.
+    - O movimento só é afetado pelo drift/freio se o jogador estiver no chão.
+    - O texto de velocidade no Canvas é atualizado em tempo real, mostrando a velocidade atual em km/h.
+*/
 
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Velocidade")]
-    public float baseForwardSpeed = 6f;
-    public float maxForwardSpeed = 12f;
-    public float accelRate = 10f;
-    public float brakeRate = 12f;
+    public float baseForwardSpeed = 6f;      // Velocidade mínima (inicial)
+    public float maxForwardSpeed = 20f;      // Velocidade máxima sem boost
+    public float accelRate = 10f;            // Taxa de aceleração
+    public float brakeRate = 12f;            // Taxa de frenagem (usada com Shift sem W)
 
-    [Header("Lateral")]
-    public float lateralSpeed = 6f;
-    public float lateralAccel = 10f;
-    public float lateralFriction = 8f;
+    [Header("Desaceleração")]
+    public float slideDeceleration = 5f;     // Decaimento da aceleração (quando solta o W)
 
     [Header("Drift/Curva")]
-    public float turnBlendTime = 0.25f;
-    public float driftThresholdSpeed = 9f;
-    public float driftLateralMultiplier = 1.1f;
-    public float driftSlowdown = 4f;
+    public float driftThresholdSpeed = 9f;   // Mínima velocidade para drift
+    public float driftDampingFactor = 3.5f;  // Quão rápido o momentum se alinha à direção atual durante o drift
+    public float driftSpeedReduction = 0.7f; // Multiplicador para reduzir a velocidade durante o drift
+
+    [Header("Boost Drift")]
+    public float boostMaxValue = 20f;        // Valor máximo de boost a ser adicionado no drift
+    public float driftTimeForMaxBoost = 2f;  // Tempo necessário de drift para atingir boost máximo
+    public float boostMaxDuration = 2f;      // Duração máxima do boost
+    public float boostDecayRate = 8f;        // Taxa de decaimento do boost (gradual)
 
     [Header("Rampa/Gravidade/Pulo")]
     public float gravity = -20f;
-    public float jumpForce = 9f;           // Patins: 9, Skate: 7.5, Patinete: 6.5
-    public float airControlFactor = 0.35f; // Patins: 0.35, Skate: 0.3, Patinete: 0.25
-
-    [Header("Curva por Botão")]
-    public float turnAngleDegrees = 90f;
+    public float jumpForce = 8f;
+    public float airControlFactor = 0.35f;
 
     [Header("Referências")]
-    public Transform forwardReference;
+    public Transform cameraPivot;
+    public TMP_Text speedText;
+
+    [Header("Câmera")]
+    public float mouseSensitivity = 5f;
 
     // Variáveis internas
-    float currentSpeed;
-    float lateralVel;
-    float verticalVel;
+    Vector3 momentum = Vector3.zero;          // Vetor de inércia (movimento horizontal)
+    float verticalVel = 0f;                   // Velocidade vertical
     bool isGrounded;
-
-    // Variáveis de curva
-    bool isTurning = false;
-    float turnTimer = 0f;
-    float startYaw;
-    float targetYaw;
-    float currentYaw;
-    float pendingTurn = 0f; // -1 = esquerda, 1 = direita, 2 = 180°
-
-    // Drift
     bool isDrifting = false;
-
+    float driftTimer = 0f;
+    bool driftButtonHeld = false;
+    float boostValue = 0f;
+    float boostTimer = 0f;
     CharacterController controller;
+    float cameraPitch = 0f;
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
-        if (forwardReference == null) forwardReference = transform;
-        currentSpeed = 0f; // Começa parado
+        if (cameraPivot == null)
+            cameraPivot = transform;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
     {
-        // Checa se está no chão
+        float dt = Time.deltaTime;
+
+        // Controle da Câmera
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+        transform.Rotate(Vector3.up * mouseX);
+        cameraPitch -= mouseY;
+        cameraPitch = Mathf.Clamp(cameraPitch, -60f, 60f);
+        cameraPivot.localEulerAngles = new Vector3(cameraPitch, 0f, 0f);
+
+        // Atualiza estado de chão e pulo
         isGrounded = controller.isGrounded;
-        if (isGrounded && verticalVel < 0) verticalVel = -1f;
-
-        // Pulo
+        if (isGrounded && verticalVel < 0)
+            verticalVel = -1f;
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
-        {
             verticalVel = jumpForce;
-        }
 
-        // Input lateral
-        float inputX = Input.GetAxis("Horizontal");
-        float targetLateral = inputX * lateralSpeed;
-        if (isGrounded)
-        {
-            lateralVel = Mathf.MoveTowards(lateralVel, targetLateral, lateralAccel * Time.deltaTime);
-            if (Mathf.Abs(inputX) < 0.1f)
-                lateralVel = Mathf.MoveTowards(lateralVel, 0, lateralFriction * Time.deltaTime);
-        }
-        else
-        {
-            lateralVel = Mathf.MoveTowards(lateralVel, targetLateral * airControlFactor, lateralAccel * airControlFactor * Time.deltaTime);
-        }
+        // Entrada de Movimento
+        bool accelerating = Input.GetKey(KeyCode.W) && isGrounded;
+        bool shifting = Input.GetKey(KeyCode.LeftShift) && isGrounded;
+        bool driftActive = accelerating && shifting && (momentum.magnitude > driftThresholdSpeed);
+        bool braking = shifting && !accelerating;
 
-        // Input avanço/freio
-        float inputZ = Input.GetAxis("Vertical");
-        bool braking = Input.GetKey(KeyCode.LeftShift) || inputZ < -0.1f;
-        if (braking)
-        {
-            currentSpeed = Mathf.MoveTowards(currentSpeed, 0, brakeRate * Time.deltaTime);
-        }
-        else
-        {
-            float targetSpeed = 0f;
-            if (inputZ > 0.1f)
-                targetSpeed = Mathf.Lerp(0, maxForwardSpeed, inputZ); // acelera até o máximo conforme segura W
-
-            currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, accelRate * Time.deltaTime);
-        }
-        currentSpeed = Mathf.Clamp(currentSpeed, 0, maxForwardSpeed);
-
-        // Drift simples (corrigido)
-        if (currentSpeed > driftThresholdSpeed && braking)
+        // Lógica de Drift e Boost
+        if (driftActive)
         {
             if (!isDrifting)
             {
-                lateralVel *= driftLateralMultiplier;
                 isDrifting = true;
+                driftTimer = 0f;
+                driftButtonHeld = true;
             }
-            currentSpeed = Mathf.MoveTowards(currentSpeed, driftThresholdSpeed, driftSlowdown * Time.deltaTime);
+            driftTimer += dt;
+            momentum = Vector3.Lerp(momentum, transform.forward * momentum.magnitude, driftDampingFactor * dt);
         }
         else
         {
+            if (isDrifting && driftButtonHeld)
+            {
+                float driftRatio = Mathf.Clamp01(driftTimer / driftTimeForMaxBoost);
+                float extraBoost = boostMaxValue * driftRatio;
+                momentum = momentum.normalized * (momentum.magnitude + extraBoost);
+                boostValue = extraBoost;
+                boostTimer = boostMaxDuration * driftRatio;
+                driftButtonHeld = false;
+            }
             isDrifting = false;
+            driftTimer = 0f;
         }
+        if (boostTimer > 0f)
+        {
+            boostTimer -= dt;
+            float newBoost = Mathf.MoveTowards(boostValue, 0f, boostDecayRate * dt);
+            float deltaBoost = boostValue - newBoost;
+            boostValue = newBoost;
+            float newMag = momentum.magnitude - deltaBoost;
+            if (newMag < 0) newMag = 0;
+            momentum = (momentum.magnitude > 0) ? momentum.normalized * newMag : Vector3.zero;
+        }
+
+        // Atualização do Momentum (Força Acumulada)
+        if (braking)
+        {
+            momentum = Vector3.MoveTowards(momentum, Vector3.zero, brakeRate * dt);
+        }
+        else if (accelerating)
+        {
+            Vector3 target = transform.forward * maxForwardSpeed;
+            momentum = Vector3.MoveTowards(momentum, target, accelRate * dt);
+        }
+        else
+        {
+            momentum = Vector3.MoveTowards(momentum, Vector3.zero, slideDeceleration * dt);
+        }
+        float maxSpeedLimit = maxForwardSpeed + boostMaxValue;
+        if (momentum.magnitude > maxSpeedLimit)
+            momentum = momentum.normalized * maxSpeedLimit;
 
         // Gravidade
         if (!isGrounded)
-            verticalVel += gravity * Time.deltaTime;
+            verticalVel += gravity * dt;
 
-        // ----------- CURVAS (Q/E/R) -----------
-        // Detecta pedido de curva
-        if (!isTurning)
+        // Movimento Final
+        Vector3 move = momentum + Vector3.up * verticalVel;
+        controller.Move(move * dt);
+    }
+
+    void FixedUpdate()
+    {
+        // Atualiza o texto de velocidade em km/h no Canvas
+        if (speedText != null)
         {
-            if (Input.GetKeyDown(KeyCode.Q))
-                pendingTurn = -1f; // Esquerda
-            else if (Input.GetKeyDown(KeyCode.E))
-                pendingTurn = 1f;  // Direita
-            else if (Input.GetKeyDown(KeyCode.R))
-                pendingTurn = 2f;  // Meia-volta
+            Vector3 horizontalMomentum = new Vector3(momentum.x, 0f, momentum.z);
+            float realSpeed = horizontalMomentum.magnitude;
+
+            // Aplica redução de velocidade se estiver em drift
+            if (isDrifting)
+                realSpeed *= driftSpeedReduction;
+
+            float speedKmh = realSpeed * 3.6f;
+            speedText.text = $"{speedKmh:F0} Km/h";
         }
-
-        // Inicia curva se houver pedido
-        if (!isTurning && pendingTurn != 0f)
-        {
-            isTurning = true;
-            turnTimer = 0f;
-            startYaw = transform.eulerAngles.y;
-            if (pendingTurn == 2f)
-                targetYaw = startYaw + 180f;
-            else
-                targetYaw = startYaw + pendingTurn * turnAngleDegrees;
-            pendingTurn = 0f;
-        }
-
-        // Blend de curva
-        if (isTurning)
-        {
-            turnTimer += Time.deltaTime;
-            float t = Mathf.Clamp01(turnTimer / turnBlendTime);
-            currentYaw = Mathf.LerpAngle(startYaw, targetYaw, t);
-            transform.rotation = Quaternion.Euler(0, currentYaw, 0);
-
-            if (t >= 1f)
-            {
-                isTurning = false;
-                transform.rotation = Quaternion.Euler(0, targetYaw, 0);
-            }
-        }
-        // ----------- FIM CURVAS -----------
-
-        // Movimento final
-        Vector3 move = forwardReference.forward * currentSpeed + forwardReference.right * lateralVel + Vector3.up * verticalVel;
-        controller.Move(move * Time.deltaTime);
     }
 }
