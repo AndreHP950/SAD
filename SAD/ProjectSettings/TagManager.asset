@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - TurnNode
+  - Mailbox
   layers:
   - Default
   - TransparentFX
