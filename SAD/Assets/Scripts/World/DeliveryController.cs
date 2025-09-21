@@ -124,6 +124,9 @@ public class DeliveryController : MonoBehaviour
 
     public void StartDelivery(int boxNumber)
     {
+        // SFX: Toca som de coleta de caixa
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayCollectBoxSFX();
         deliverGoal = mailboxesTargets[boxNumber];
         mailboxDistance = Vector3.Distance(mailboxes[boxNumber].position, mailboxes[mailboxesTargets[boxNumber]].position);
         currentDeliveryTime = (int)mailboxDistance / DistanceDivisionValue;
@@ -157,8 +160,13 @@ public class DeliveryController : MonoBehaviour
 
     public void EndDelivery(int boxNumber, bool scoring)
     {
+
         if (scoring)
         {
+            // SFX: Toca som de entrega bem-sucedida
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayDeliverySuccessSFX();
+
             int deliveryScore = (int)mailboxDistance * scoreDistanceMultiplier + baseDeliveryScoreValue;
             scoreController.ChangeScore(deliveryScore);
             Debug.Log($"Distance: {(int)mailboxDistance} | Score: {deliveryScore}");
@@ -174,6 +182,9 @@ public class DeliveryController : MonoBehaviour
 
     public void FailedDelivery()
     {
+        // SFX: Toca som de entrega falhada
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayDeliveryFailedSFX();
         isFailed = true;
         RestoreMailboxesTrigger();
         if (playerCollision.mailboxRange)

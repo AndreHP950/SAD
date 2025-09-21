@@ -1,4 +1,5 @@
 /*
+ * @AndreHP
     Sistema de movimento com inércia, drift e boost estilo arcade.
 
     - O movimento é baseado em um vetor de momentum, simulando física de AddForce.
@@ -14,8 +15,9 @@
 */
 
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
+using SAD.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
@@ -49,12 +51,17 @@ public class PlayerMovement : MonoBehaviour
     public Transform cameraPivot;
     public TMP_Text speedText;
 
-    [Header("Câmera")]
-    public float mouseSensitivity = 5f;
 
-    // Variáveis internas
-    Vector3 momentum = Vector3.zero;          // Vetor de inércia (movimento horizontal)
-    float verticalVel = 0f;                   // Velocidade vertical
+    [Header("Câmera")]
+    public float mouseSensitivity = 5f;     // Sensibilidade para mouse
+    public float touchSensitivity = 0.15f;  // Sensibilidade para toque (arrastar para girar)
+
+    [Header("Mobile")]
+    public bool mobileControls = true;      // Ative para usar botões mobile + rotação por toque
+
+    // Estado interno
+    Vector3 momentum = Vector3.zero;
+    float verticalVel = 0f;
     bool isGrounded;
     bool isDrifting = false;
     float driftTimer = 0f;
@@ -76,28 +83,54 @@ public class PlayerMovement : MonoBehaviour
     {
         float dt = Time.deltaTime;
 
-        // Controle da Câmera
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
-        transform.Rotate(Vector3.up * mouseX);
-        cameraPitch -= mouseY;
-        cameraPitch = Mathf.Clamp(cameraPitch, -60f, 60f);
-        cameraPivot.localEulerAngles = new Vector3(cameraPitch, 0f, 0f);
+        // ===== Entrada da câmera (mouse e/ou toque) =====
+        if (mobileControls && Input.touchCount > 0)
+        {
+            // Usa o primeiro toque que não está sobre UI
+            for (int i = 0; i < Input.touchCount; i++)
+            {
+                var t = Input.GetTouch(i);
+                if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(t.fingerId))
+                    continue;
 
-        // Atualiza estado de chão e pulo
+                if (t.phase == TouchPhase.Moved)
+                {
+                    float yaw = t.deltaPosition.x * touchSensitivity;
+                    float pitch = -t.deltaPosition.y * touchSensitivity;
+                    transform.Rotate(Vector3.up * yaw);
+                    cameraPitch = Mathf.Clamp(cameraPitch + pitch, -60f, 60f);
+                    cameraPivot.localEulerAngles = new Vector3(cameraPitch, 0f, 0f);
+                }
+                break;
+            }
+        }
+        else
+        {
+            float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+            float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+            transform.Rotate(Vector3.up * mouseX);
+            cameraPitch = Mathf.Clamp(cameraPitch - mouseY, -60f, 60f);
+            cameraPivot.localEulerAngles = new Vector3(cameraPitch, 0f, 0f);
+        }
+
+        // ===== Chão e pulo =====
         isGrounded = controller.isGrounded;
         if (isGrounded && verticalVel < 0)
             verticalVel = -1f;
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
             verticalVel = jumpForce;
 
-        // Entrada de Movimento
-        bool accelerating = Input.GetKey(KeyCode.W) && isGrounded;
-        bool shifting = Input.GetKey(KeyCode.LeftShift) && isGrounded;
-        bool driftActive = accelerating && shifting && (momentum.magnitude > driftThresholdSpeed);
-        bool braking = shifting && !accelerating;
+        // ===== Entradas de movimento (desktop + mobile) =====
+        bool accelDesktop = Input.GetKey(KeyCode.W);
+        bool brakeDesktop = Input.GetKey(KeyCode.LeftShift);
 
-        // Lógica de Drift e Boost
+        bool accelerating = (mobileControls ? MobileInput.AccelerateHeld : accelDesktop) && isGrounded;
+        bool brakingOnly = (mobileControls ? MobileInput.BrakeHeld : brakeDesktop) && isGrounded && !accelerating;
+        bool driftButton = (mobileControls ? MobileInput.BrakeHeld : brakeDesktop); // No mobile, Acelerar+Frear = drift
+
+        bool driftActive = accelerating && driftButton && (momentum.magnitude > driftThresholdSpeed) && isGrounded;
+
+        // ===== Drift & Boost =====
         if (driftActive)
         {
             if (!isDrifting)
@@ -107,6 +140,8 @@ public class PlayerMovement : MonoBehaviour
                 driftButtonHeld = true;
             }
             driftTimer += dt;
+
+            // Realinha o momentum mais rápido, mas preserva inércia
             momentum = Vector3.Lerp(momentum, transform.forward * momentum.magnitude, driftDampingFactor * dt);
         }
         else
@@ -123,6 +158,8 @@ public class PlayerMovement : MonoBehaviour
             isDrifting = false;
             driftTimer = 0f;
         }
+
+        // Decaimento do boost
         if (boostTimer > 0f)
         {
             boostTimer -= dt;
@@ -134,42 +171,44 @@ public class PlayerMovement : MonoBehaviour
             momentum = (momentum.magnitude > 0) ? momentum.normalized * newMag : Vector3.zero;
         }
 
-        // Atualização do Momentum (Força Acumulada)
-        if (braking)
+        // ===== Atualização do momentum =====
+        if (brakingOnly)
         {
             momentum = Vector3.MoveTowards(momentum, Vector3.zero, brakeRate * dt);
         }
         else if (accelerating)
         {
             Vector3 target = transform.forward * maxForwardSpeed;
+            // Se estiver em drift, reduz velocidade alvo
+            if (isDrifting)
+                target *= driftSpeedReduction;
+
             momentum = Vector3.MoveTowards(momentum, target, accelRate * dt);
         }
         else
         {
             momentum = Vector3.MoveTowards(momentum, Vector3.zero, slideDeceleration * dt);
         }
+
         float maxSpeedLimit = maxForwardSpeed + boostMaxValue;
         if (momentum.magnitude > maxSpeedLimit)
             momentum = momentum.normalized * maxSpeedLimit;
 
-        // Gravidade
+        // ===== Gravidade =====
         if (!isGrounded)
             verticalVel += gravity * dt;
 
-        // Movimento Final
+        // ===== Movimento final =====
         Vector3 move = momentum + Vector3.up * verticalVel;
         controller.Move(move * dt);
     }
 
     void FixedUpdate()
     {
-        // Atualiza o texto de velocidade em km/h no Canvas
         if (speedText != null)
         {
             Vector3 horizontalMomentum = new Vector3(momentum.x, 0f, momentum.z);
             float realSpeed = horizontalMomentum.magnitude;
-
-            // Aplica redução de velocidade se estiver em drift
             if (isDrifting)
                 realSpeed *= driftSpeedReduction;
 
