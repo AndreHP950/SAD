@@ -5,7 +5,8 @@ using System;
 public class PlayerCollisionDetection : MonoBehaviour
 {
     [SerializeField] DeliveryController deliveryController;
-    int boxNumber = 0;
+    public int boxNumber = 0;
+    public bool mailboxRange = false;
     private void Start()
     {
         GameObject obj = GameObject.Find("Mailboxes");
@@ -17,6 +18,8 @@ public class PlayerCollisionDetection : MonoBehaviour
         if (other.transform.CompareTag("Mailbox"))
         {
             boxNumber = Array.IndexOf(deliveryController.mailboxes, other.transform);
+            mailboxRange = true;
+
             if (!deliveryController.isDelivering)
             {
                 deliveryController.StartDelivery(boxNumber);
@@ -24,9 +27,14 @@ public class PlayerCollisionDetection : MonoBehaviour
             }
             else
             {
-                deliveryController.EndDelivery(boxNumber);
+                deliveryController.EndDelivery(boxNumber, true); 
                 Debug.Log($"Ended Delivery: {boxNumber}");
             }
         }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.transform.CompareTag("Mailbox")) mailboxRange = false;
     }
 }

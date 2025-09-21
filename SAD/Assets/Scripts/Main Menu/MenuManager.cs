@@ -7,12 +7,7 @@ public class MenuManager : MonoBehaviour
 {
     [SerializeField] CinemachineCamera[] cameraList;
     [SerializeField] Canvas[] canvas;
-    int menuLocation = 0;
-
-    void Start()
-    {
-        MenuGoTo(0);
-    }
+    public int menuLocation = 0;
 
     void Update()
     {
@@ -56,7 +51,10 @@ public class MenuManager : MonoBehaviour
 
     void MainMenu() //menuLocation 1
     {
-
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            MenuGoTo(6);
+        }
     }
 
     void CharacterSelector() //menuLocation 2
@@ -104,7 +102,9 @@ public class MenuManager : MonoBehaviour
     public void MenuGoTo(int location)
     {
         DisableButtons();
-        cameraList[location].Prioritize();
+        cameraList[location].enabled = true;
+        cameraList[menuLocation].enabled = false;
+        //cameraList[location].Prioritize();
         menuLocation = location;
         EnableButtons();
     }
