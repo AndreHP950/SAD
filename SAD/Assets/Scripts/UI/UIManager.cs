@@ -4,18 +4,18 @@ using UnityEngine;
 public class UIManager : MonoBehaviour
 {
     public Animator UIAnimator;
-    private static UIManager instance;
 
     private void Awake()
     {
-        if (instance != null && instance != this)
+        GameObject[] objs = GameObject.FindGameObjectsWithTag("UIManager");
+        if (objs.Length > 1)
         {
-            Destroy(this);
-            return;
+            Destroy(gameObject);
         }
-
-        instance = this;
-        DontDestroyOnLoad(gameObject);
+        else
+        {
+            DontDestroyOnLoad(gameObject);
+        }
 
         UIAnimator = GetComponent<Animator>();
     }

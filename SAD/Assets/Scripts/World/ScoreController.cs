@@ -8,6 +8,7 @@ public class ScoreController : MonoBehaviour
 
     private void Start()
     {
+        scoreText = GameObject.FindWithTag("UIManager").transform.Find("GameUI/Score/ScoreText").GetComponent<TextMeshProUGUI>();
         scoreText.text = score.ToString();
     }
 
