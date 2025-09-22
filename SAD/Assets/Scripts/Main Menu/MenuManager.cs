@@ -8,6 +8,14 @@ public class MenuManager : MonoBehaviour
     [SerializeField] CinemachineCamera[] cameraList;
     [SerializeField] Canvas[] canvas;
     public int menuLocation = 0;
+    GameManager gameManager;
+
+    private void Start()
+    {
+        gameManager = GameObject.FindWithTag("GameManager").GetComponent<GameManager>();
+
+        if (gameManager.returningFromGame) MenuGoTo(2);
+    }
 
     void Update()
     {
@@ -20,7 +28,7 @@ public class MenuManager : MonoBehaviour
                 MainMenu();
                 break;
             case 2:
-                CharacterSelector();
+                Results();
                 break;
             case 3:
                 Records();
@@ -57,7 +65,7 @@ public class MenuManager : MonoBehaviour
         }
     }
 
-    void CharacterSelector() //menuLocation 2
+    void Results() //menuLocation 2
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {

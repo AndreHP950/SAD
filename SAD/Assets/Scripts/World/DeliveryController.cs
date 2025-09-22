@@ -7,6 +7,8 @@ public class DeliveryController : MonoBehaviour
     public bool isDelivering = false;
     public bool isFailed = false;
     int deliverGoal = 0;
+    GameObject player;
+    
     PlayerCollisionDetection playerCollision;
 
     [Header("Distance Values")]
@@ -24,16 +26,24 @@ public class DeliveryController : MonoBehaviour
     [SerializeField] int scoreDistanceMultiplier = 10;
     ScoreController scoreController;
 
+    [Header("Package Values")]
+    public GameObject packagePrefab;
+    public Transform spawnPoint;
+    PlayerBackpack playerBackpack;
+    Transform playerPackageSlot;
+
     [Header("Mailboxes Values")]
     public Transform[] mailboxes = null;
     public int[] mailboxesTargets = null;
 
-    
-
     void Start()
     {
-        playerCollision = GameObject.FindWithTag("Player").GetComponent<PlayerCollisionDetection>();
+        player = GameObject.FindWithTag("Player");
+        playerBackpack = player.GetComponent<PlayerBackpack>();
+        playerPackageSlot = player.transform.Find("PackageSlot");
+        playerCollision = player.GetComponent<PlayerCollisionDetection>();
         scoreController = GetComponent<ScoreController>();
+
         GetMailboxes();
         if (mailboxes.Length > 1) CreateDelivery(-1);
     }
@@ -151,18 +161,24 @@ public class DeliveryController : MonoBehaviour
                 mailboxes[i].GetComponent<SphereCollider>().enabled = true;
                 goalMarker.gameObject.SetActive(true);
             }
-            isDelivering = true;
+
+            
         }
+        GetPackage(mailboxes[boxNumber]);
+
+        isDelivering = true;
     }
 
     public void EndDelivery(int boxNumber, bool scoring)
     {
         if (scoring)
         {
+            DeliverPackage(mailboxes[boxNumber]);
             int deliveryScore = (int)mailboxDistance * scoreDistanceMultiplier + baseDeliveryScoreValue;
             scoreController.ChangeScore(deliveryScore);
             Debug.Log($"Distance: {(int)mailboxDistance} | Score: {deliveryScore}");
         }
+        else ThrowAwayPackage();
 
         CreateDelivery(boxNumber);
         Transform goalMarker = mailboxes[boxNumber].transform.Find("Markers/TargetMarker");
@@ -192,6 +208,30 @@ public class DeliveryController : MonoBehaviour
         }
     }
 
+    private void GetPackage(Transform mailbox)
+    {
+        GameObject package = Instantiate(packagePrefab, mailbox.position, mailbox.rotation);
 
+        playerBackpack.ReceivePackage(package);
+    }
 
+    private void DeliverPackage(Transform mailbox)
+    {
+        playerBackpack.DeliverPackage(mailbox);
+    }
+
+    private void ThrowAwayPackage()
+    {
+        playerBackpack.DeliverPackage(null);
+    }
+
+    public void EndAllDeliveries()
+    {
+        for (int i = 0; i < mailboxes.Length; ++i)
+        {
+            mailboxes[i].GetComponent<SphereCollider>().enabled=false;
+            Transform marker = mailboxes[i].Find("Markers");
+            marker.gameObject.SetActive(false);
+        }
+    }
 }
