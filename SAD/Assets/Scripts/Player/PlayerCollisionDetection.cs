@@ -5,7 +5,7 @@ using System;
 public class PlayerCollisionDetection : MonoBehaviour
 {
     [SerializeField] DeliveryController deliveryController;
-    public int boxNumber = 0;
+    public int boxNumber;
     public bool mailboxRange = false;
     private void Start()
     {

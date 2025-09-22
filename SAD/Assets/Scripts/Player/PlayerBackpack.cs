@@ -5,7 +5,7 @@ public class PlayerBackpack : MonoBehaviour
 {
     public Transform packageSlot;
     private GameObject currentPackage;
-    public float packageSpeed = 5f;
+    public float packageSpeed = 30f;
 
     private void Start()
     {

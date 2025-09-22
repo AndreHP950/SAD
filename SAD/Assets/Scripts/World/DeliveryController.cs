@@ -140,7 +140,6 @@ public class DeliveryController : MonoBehaviour
         deliverGoal = mailboxesTargets[boxNumber];
         mailboxDistance = Vector3.Distance(mailboxes[boxNumber].position, mailboxes[mailboxesTargets[boxNumber]].position);
         currentDeliveryTime = (int)mailboxDistance / DistanceDivisionValue;
-
         for (int i = 0; i < mailboxes.Length; i++)
         {
             Transform markers = mailboxes[i].transform.Find("Markers");
@@ -168,7 +167,6 @@ public class DeliveryController : MonoBehaviour
             
         }
         GetPackage(mailboxes[boxNumber]);
-
         isDelivering = true;
     }
 
