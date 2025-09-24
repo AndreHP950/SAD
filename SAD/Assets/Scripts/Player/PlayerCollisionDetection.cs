@@ -15,6 +15,7 @@ public class PlayerCollisionDetection : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        
         if (other.transform.CompareTag("Mailbox"))
         {
             boxNumber = Array.IndexOf(deliveryController.mailboxes, other.transform);
@@ -25,10 +26,14 @@ public class PlayerCollisionDetection : MonoBehaviour
                 deliveryController.StartDelivery(boxNumber);
                 Debug.Log($"Started Delivery: {boxNumber}");
             }
-            else
+            else if (!deliveryController.isFailed) 
             {
                 deliveryController.EndDelivery(boxNumber, true); 
                 Debug.Log($"Ended Delivery: {boxNumber}");
+            }
+            else
+            {
+                deliveryController.EndDelivery(boxNumber, false);
             }
         }
     }

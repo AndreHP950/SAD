@@ -9227,7 +9227,7 @@ MonoBehaviour:
   speedText: {fileID: 676594987}
   mouseSensitivity: 2
   touchSensitivity: 0.15
-  mobileControls: 1
+  mobileControls: 0
 --- !u!114 &1148291707
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9717,13 +9717,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a514d7ed4d5a9446ad308480615ad96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxTime: 120
+  maxTime: 30
   currentTime: 0
   matchTimer: {fileID: 379247493}
-  gameManager: {fileID: 0}
   deliveryController: {fileID: 0}
   scoreController: {fileID: 0}
-  timesUp: {fileID: 0}
 --- !u!114 &1206594659
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17043,6 +17041,10 @@ PrefabInstance:
     - target: {fileID: 1334059455757323304, guid: 72d559c077fe3d74f9c08b4659e97d24, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6612428118811474606, guid: 72d559c077fe3d74f9c08b4659e97d24, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8118860489646594568, guid: 72d559c077fe3d74f9c08b4659e97d24, type: 3}
       propertyPath: m_Name

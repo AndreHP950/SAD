@@ -7,9 +7,7 @@ using UnityEngine.SocialPlatforms.Impl;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField]UIManager uiManager;
-    [SerializeField]Transform gameUI;
-    [SerializeField]Transform timesUp;
+    public static GameManager instance;
     public bool returningFromGame = false;
     int matchScore;
 
@@ -17,23 +15,20 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        GameObject[] objs = GameObject.FindGameObjectsWithTag("GameManager");
-        if (objs.Length > 1)
+        if (instance == null)
         {
-            Destroy(gameObject);
+            instance = this;
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
-            DontDestroyOnLoad(gameObject);
+            Destroy(gameObject);
         }
     }
 
     public void Start()
     {
-        uiManager = GameObject.Find("UIManager").GetComponent<UIManager>();
-        gameUI = uiManager.transform.Find("GameUI");
-        timesUp = uiManager.transform.Find("GameUI/TimesUp");
-        uiManager.UIAnimator.SetTrigger("Open");
+        UIManager.instance.UIAnimator.SetTrigger("Open");
     }
 
     public void StartGame()
@@ -53,8 +48,8 @@ public class GameManager : MonoBehaviour
         if (isLoadingScene) yield break;
         isLoadingScene = true;
 
-        timesUp.gameObject.SetActive(false);
-        uiManager.UIAnimator.SetTrigger("Close");
+        UIManager.instance.TimesUp(false);
+        UIManager.instance.UIAnimator.SetTrigger("Close");
         yield return new WaitForSeconds(1f);
 
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("Game", LoadSceneMode.Single);
@@ -65,8 +60,8 @@ public class GameManager : MonoBehaviour
 
         isLoadingScene = false;
 
-        gameUI.gameObject.SetActive(true);
-        uiManager.UIAnimator.SetTrigger("Open");
+        UIManager.instance.gameUI.gameObject.SetActive(true);
+        UIManager.instance.UIAnimator.SetTrigger("Open");
     }
 
     public IEnumerator EndGameEvents()
@@ -74,9 +69,9 @@ public class GameManager : MonoBehaviour
         if (isLoadingScene) yield break;
         isLoadingScene = true;
         yield return new WaitForSeconds(4f);
-        uiManager.UIAnimator.SetTrigger("Close");
+        UIManager.instance.UIAnimator.SetTrigger("Close");
         yield return new WaitForSeconds(2f);
-        gameUI.gameObject.SetActive(false);
+        UIManager.instance.gameUI.gameObject.SetActive(false);
 
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("MainMenu", LoadSceneMode.Single);
         while (!asyncLoad.isDone)
@@ -92,6 +87,6 @@ public class GameManager : MonoBehaviour
         TextMeshProUGUI finalScoreText = GameObject.Find("Menus/Results/Score").GetComponent<TextMeshProUGUI>();
         finalScoreText.text = matchScore.ToString();
 
-        uiManager.UIAnimator.SetTrigger("Open");
+        UIManager.instance.UIAnimator.SetTrigger("Open");
     }
 }

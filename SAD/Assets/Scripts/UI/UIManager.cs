@@ -3,25 +3,36 @@ using UnityEngine;
 
 public class UIManager : MonoBehaviour
 {
+    public static UIManager instance;
     public Animator UIAnimator;
+    public Transform gameUI;
 
     private void Awake()
     {
         GameObject[] objs = GameObject.FindGameObjectsWithTag("UIManager");
-        if (objs.Length > 1)
+        if (instance == null)
         {
-            Destroy(gameObject);
+            instance = this;
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
-            DontDestroyOnLoad(gameObject);
+            Destroy(gameObject);
         }
 
         UIAnimator = GetComponent<Animator>();
+        gameUI = transform.Find("GameUI");
     }
 
     void Start()
     {
         
+    }
+
+    public void TimesUp(bool activate)
+    {
+        Transform timesUp = gameUI.transform.Find("TimesUp");
+        if (activate) timesUp.gameObject.SetActive(true);
+        else timesUp.gameObject.SetActive(false);
     }
 }

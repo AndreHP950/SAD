@@ -201,12 +201,6 @@ public class DeliveryController : MonoBehaviour
             AudioManager.Instance.PlayDeliveryFailedSFX();
         isFailed = true;
         RestoreMailboxesTrigger();
-        if (playerCollision.mailboxRange)
-        {
-            EndDelivery(playerCollision.boxNumber, false);
-        }
-        else EndDelivery(-1, false);
-        
     }
 
     void RestoreMailboxesTrigger() //Used only on failed deliveries
