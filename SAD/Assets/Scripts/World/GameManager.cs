@@ -5,11 +5,18 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.SocialPlatforms.Impl;
 
+//[System.Serializable]
+//public class Character
+//{
+//    public string name;
+//}
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
     public bool returningFromGame = false;
     int matchScore;
+    public int character = 1;
 
     private bool isLoadingScene = false;
 

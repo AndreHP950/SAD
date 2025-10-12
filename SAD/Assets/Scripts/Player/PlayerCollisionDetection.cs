@@ -9,8 +9,7 @@ public class PlayerCollisionDetection : MonoBehaviour
     public bool mailboxRange = false;
     private void Start()
     {
-        GameObject obj = GameObject.Find("Mailboxes");
-        deliveryController = obj.GetComponent<DeliveryController>();
+        deliveryController = GameObject.Find("Mailboxes").GetComponent<DeliveryController>();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -18,23 +17,25 @@ public class PlayerCollisionDetection : MonoBehaviour
         
         if (other.transform.CompareTag("Mailbox"))
         {
-            boxNumber = Array.IndexOf(deliveryController.mailboxes, other.transform);
+            boxNumber = deliveryController.mailboxes.FindIndex(m => m.mailbox == other.gameObject);
             mailboxRange = true;
 
-            if (!deliveryController.isDelivering)
+            if (boxNumber >= 0)
             {
-                deliveryController.StartDelivery(boxNumber);
-                Debug.Log($"Started Delivery: {boxNumber}");
-            }
-            else if (!deliveryController.isFailed) 
-            {
-                deliveryController.EndDelivery(boxNumber, true); 
-                Debug.Log($"Ended Delivery: {boxNumber}");
-            }
-            else
-            {
-                deliveryController.EndDelivery(boxNumber, false);
-            }
+                if (!deliveryController.isDelivering)
+                {
+                    deliveryController.StartDelivery(boxNumber);
+                    Debug.Log($"Started Delivery: {boxNumber}");
+                }
+                else if (!deliveryController.isFailed)
+                {
+                    if (boxNumber == deliveryController.deliverGoal)
+                    {
+                        deliveryController.EndDelivery(boxNumber, true);
+                        Debug.Log($"Ended Delivery: {boxNumber}");
+                    }
+                }
+            }  
         }
     }
 

@@ -1,12 +1,22 @@
+using NUnit.Framework;
+using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using Unity.Jobs;
 using UnityEngine;
+
+[System.Serializable]
+public class Mailbox
+{
+    public GameObject mailbox;
+    public int target;
+}
 
 public class DeliveryController : MonoBehaviour
 {
     public bool isDelivering = false;
     public bool isFailed = false;
-    int deliverGoal = 0;
+    public int deliverGoal = 0;
     GameObject player;
     
     PlayerCollisionDetection playerCollision;
@@ -30,22 +40,25 @@ public class DeliveryController : MonoBehaviour
     public GameObject packagePrefab;
     public Transform spawnPoint;
     PlayerBackpack playerBackpack;
-    Transform playerPackageSlot;
 
     [Header("Mailboxes Values")]
-    public Transform[] mailboxes = null;
-    public int[] mailboxesTargets = null;
+    public List<Mailbox> mailboxesArea1 = new List<Mailbox>();
+    public List<Mailbox> mailboxesArea2 = new List<Mailbox>();
+    public List<Mailbox> mailboxesArea3 = new List<Mailbox>();
+    public List<Mailbox> mailboxes;
+
+    [Header("Areas")]
+    public Collider[] areaColliders;
 
     void Start()
     {
         player = GameObject.FindWithTag("Player");
         playerBackpack = player.GetComponent<PlayerBackpack>();
-        playerPackageSlot = player.transform.Find("PackageSlot");
         playerCollision = player.GetComponent<PlayerCollisionDetection>();
         scoreController = GetComponent<ScoreController>();
 
         GetMailboxes();
-        if (mailboxes.Length > 1) CreateDelivery(-1);
+        if (mailboxes.Count > 1) CreateDelivery(-1);
     }
 
     void Update()
@@ -71,61 +84,83 @@ public class DeliveryController : MonoBehaviour
 
     void GetMailboxes()
     {
-        int count = 0;
+        GameObject[] mailbox = GameObject.FindGameObjectsWithTag("Mailbox");
 
-        foreach (Transform mailbox in transform)
+        mailboxesArea1.Clear(); mailboxesArea2.Clear(); mailboxesArea3.Clear();
+
+        foreach (GameObject m in mailbox)
         {
-            if (mailbox.CompareTag("Mailbox"))
+            string currentArea = "Unknown";
+
+            foreach (Collider area in areaColliders)
             {
-                count++;
+                if (area.bounds.Contains(m.transform.position))
+                {
+                    currentArea = area.name;
+                    break;
+                }
+            }
+            switch (currentArea)
+            {
+                case "Area 1":
+                    mailboxesArea1.Add(new Mailbox { mailbox = m });
+                    break;
+                case "Area 2":
+                    mailboxesArea2.Add(new Mailbox { mailbox = m });
+                    break;
+                case "Area 3":
+                    mailboxesArea3.Add(new Mailbox { mailbox = m });
+                    break;
             }
         }
 
-        mailboxes = new Transform[count];
-        mailboxesTargets = new int[count];
-        count = 0;
-
-        foreach (Transform mailbox in transform)
+        switch (GameManager.instance.character)
         {
-            if (mailbox.CompareTag("Mailbox"))
-            {
-                mailboxes[count] = mailbox;
-                count++;
-            }
+            case 1:
+                mailboxes = mailboxesArea1;
+                break;
+            case 2:
+                mailboxes = mailboxesArea2;
+                break;
+            case 3:
+                mailboxes = mailboxesArea3;
+                break;
+            default:
+                mailboxes = mailboxesArea1;
+                break;
         }
     }
 
-    void CreateDelivery(int boxNumber)
+
+    public void CreateDelivery(int boxNumber)
     {
-        for (int i = 0;  i < mailboxesTargets.Length; i++)
+        for (int i = 0;  i < mailboxes.Count; i++)
         {
             if (i != boxNumber)
             {
-                mailboxes[i].GetComponent<SphereCollider>().enabled = true;
-
                 do
                 {
-                    mailboxesTargets[i] = Random.Range(0, mailboxes.Length);
+                    mailboxes[i].target = Random.Range(0, mailboxes.Count);
                 }
-                while (i == mailboxesTargets[i]);
+                while (i == mailboxes[i].target);
 
-                mailboxDistance = Vector3.Distance(mailboxes[i].position, mailboxes[mailboxesTargets[i]].position);
-                Transform marker = mailboxes[i].transform.Find("Markers/TargetMarker");
+                mailboxDistance = Vector3.Distance(mailboxes[i].mailbox.transform.position, mailboxes[mailboxes[i].target].mailbox.transform.position);
+                Transform marker = mailboxes[i].mailbox.transform.Find("Markers/TargetMarker");
                 if (marker != null) marker.gameObject.SetActive(false);
 
                 if (mailboxDistance <= distanceClose)
                 {
-                    marker = mailboxes[i].transform.Find("Markers/DistanceClose");
+                    marker = mailboxes[i].mailbox.transform.Find("Markers/DistanceClose");
                     if (marker != null) marker.gameObject.SetActive(true);
                 }
                 else if (mailboxDistance > distanceClose && mailboxDistance < distanceFar)
                 {
-                    marker = mailboxes[i].transform.Find("Markers/DistanceMedium");
+                    marker = mailboxes[i].mailbox.transform.Find("Markers/DistanceMedium");
                     if (marker != null) marker.gameObject.SetActive(true);
                 }
                 else
                 {
-                    marker = mailboxes[i].transform.Find("Markers/DistanceFar");
+                    marker = mailboxes[i].mailbox.transform.Find("Markers/DistanceFar");
                     if (marker != null) marker.gameObject.SetActive(true);
                 }
             }
@@ -137,12 +172,12 @@ public class DeliveryController : MonoBehaviour
         // SFX: Toca som de coleta de caixa
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlayCollectBoxSFX();
-        deliverGoal = mailboxesTargets[boxNumber];
-        mailboxDistance = Vector3.Distance(mailboxes[boxNumber].position, mailboxes[mailboxesTargets[boxNumber]].position);
+        deliverGoal = mailboxes[boxNumber].target;
+        mailboxDistance = Vector3.Distance(mailboxes[boxNumber].mailbox.transform.position, mailboxes[mailboxes[boxNumber].target].mailbox.transform.position);
         currentDeliveryTime = (int)mailboxDistance / DistanceDivisionValue;
-        for (int i = 0; i < mailboxes.Length; i++)
+        for (int i = 0; i < mailboxes.Count; i++)
         {
-            Transform markers = mailboxes[i].transform.Find("Markers");
+            Transform markers = mailboxes[i].mailbox.transform.Find("Markers");
             if (markers != null)
             {
                 foreach (Transform marker in markers)
@@ -153,33 +188,27 @@ public class DeliveryController : MonoBehaviour
                     }
                 }
             }
-            if (i != deliverGoal)
+            if (i == deliverGoal)
             {
-                mailboxes[i].GetComponent<SphereCollider>().enabled = false;
-            }
-            else
-            {
-                Transform goalMarker = mailboxes[i].transform.Find("Markers/TargetMarker");
-                mailboxes[i].GetComponent<SphereCollider>().enabled = true;
+                Transform goalMarker = mailboxes[i].mailbox.transform.Find("Markers/TargetMarker");
                 goalMarker.gameObject.SetActive(true);
             }
 
             
         }
-        GetPackage(mailboxes[boxNumber]);
+        GetPackage(mailboxes[boxNumber].mailbox.transform);
         isDelivering = true;
     }
 
     public void EndDelivery(int boxNumber, bool scoring)
     {
-
         if (scoring)
         {
             // SFX: Toca som de entrega bem-sucedida
             if (AudioManager.Instance != null)
                 AudioManager.Instance.PlayDeliverySuccessSFX();
 
-            DeliverPackage(mailboxes[boxNumber]);
+            DeliverPackage(mailboxes[boxNumber].mailbox.transform);
             int deliveryScore = (int)mailboxDistance * scoreDistanceMultiplier + baseDeliveryScoreValue;
             scoreController.ChangeScore(deliveryScore);
             Debug.Log($"Distance: {(int)mailboxDistance} | Score: {deliveryScore}");
@@ -187,27 +216,32 @@ public class DeliveryController : MonoBehaviour
         else ThrowAwayPackage();
 
         CreateDelivery(boxNumber);
-        Transform goalMarker = mailboxes[boxNumber].transform.Find("Markers/TargetMarker");
-        goalMarker.gameObject.SetActive(false);
-        mailboxes[boxNumber].GetComponent<SphereCollider>().enabled = false;
+        if(boxNumber >= 0)
+        {
+            Transform goalMarker = mailboxes[boxNumber].mailbox.transform.Find("Markers/TargetMarker");
+            goalMarker.gameObject.SetActive(false);
+        }
         isDelivering = false;
         isFailed = false; 
     }
 
     public void FailedDelivery()
     {
-        // SFX: Toca som de entrega falhada
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlayDeliveryFailedSFX();
         isFailed = true;
-        RestoreMailboxesTrigger();
-    }
 
-    void RestoreMailboxesTrigger() //Used only on failed deliveries
-    {
-        for(int i = 0; i < mailboxes.Length; i++)
+        // SFX: Toca som de entrega falhada
+        if (AudioManager.Instance != null) 
+        { 
+            AudioManager.Instance.PlayDeliveryFailedSFX();
+        }
+
+        if (!playerCollision.mailboxRange)
         {
-            mailboxes[i].GetComponent<SphereCollider>().enabled = true;
+            EndDelivery(-1, false);
+        }
+        else
+        {
+            EndDelivery(playerCollision.boxNumber, false);
         }
     }
 
@@ -230,11 +264,12 @@ public class DeliveryController : MonoBehaviour
 
     public void EndAllDeliveries()
     {
-        for (int i = 0; i < mailboxes.Length; ++i)
+        for (int i = 0; i < mailboxes.Count; ++i)
         {
-            mailboxes[i].GetComponent<SphereCollider>().enabled=false;
-            Transform marker = mailboxes[i].Find("Markers");
+            mailboxes[i].mailbox.GetComponent<SphereCollider>().enabled = false;
+            Transform marker = mailboxes[i].mailbox.transform.Find("Markers");
             marker.gameObject.SetActive(false);
+
         }
     }
 }
