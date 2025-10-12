@@ -12,6 +12,8 @@
     - Ao soltar o drift, o boost acumulado é adicionado ao momentum e decai gradualmente.
     - O movimento só é afetado pelo drift/freio se o jogador estiver no chão.
     - O texto de velocidade no Canvas é atualizado em tempo real, mostrando a velocidade atual em km/h.
+    - Detecta colisões e reduz momentum quando o player está parado contra obstáculos.
+    - Usa "coyote time" para manter drift ao passar por degraus/pequenas elevações.
 */
 
 using UnityEngine;
@@ -23,41 +25,47 @@ using SAD.InputSystem;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Velocidade")]
-    public float baseForwardSpeed = 6f;      // Velocidade mínima (inicial)
-    public float maxForwardSpeed = 20f;      // Velocidade máxima sem boost
-    public float accelRate = 10f;            // Taxa de aceleração
-    public float brakeRate = 12f;            // Taxa de frenagem (usada com Shift sem W)
+    public float baseForwardSpeed = 6f;
+    public float maxForwardSpeed = 20f;
+    public float accelRate = 10f;
+    public float brakeRate = 12f;
 
     [Header("Desaceleração")]
-    public float slideDeceleration = 5f;     // Decaimento da aceleração (quando solta o W)
+    public float slideDeceleration = 5f;
+    public float directionChangeDeceleration = 8f;
 
     [Header("Drift/Curva")]
-    public float driftThresholdSpeed = 9f;   // Mínima velocidade para drift
-    public float driftDampingFactor = 3.5f;  // Quão rápido o momentum se alinha à direção atual durante o drift
-    public float driftSpeedReduction = 0.7f; // Multiplicador para reduzir a velocidade durante o drift
+    public float driftThresholdSpeed = 7f;
+    public float driftDampingFactor = 1f;
+    public float driftSpeedReduction = 0.5f;
+    public float driftCoyoteTime = 0.2f;  // Tempo de tolerância para manter drift ao sair brevemente do chão
 
     [Header("Boost Drift")]
-    public float boostMaxValue = 20f;        // Valor máximo de boost a ser adicionado no drift
-    public float driftTimeForMaxBoost = 2f;  // Tempo necessário de drift para atingir boost máximo
-    public float boostMaxDuration = 2f;      // Duração máxima do boost
-    public float boostDecayRate = 8f;        // Taxa de decaimento do boost (gradual)
+    public float boostMaxValue = 20f;
+    public float driftTimeForMaxBoost = 3f;
+    public float boostMaxDuration = 5f;
+    public float boostDecayRate = 3f;
 
     [Header("Rampa/Gravidade/Pulo")]
     public float gravity = -20f;
     public float jumpForce = 8f;
     public float airControlFactor = 0.35f;
 
+    [Header("Colisão")]
+    public float collisionDecayRate = 15f;
+    public float collisionThreshold = 0.5f;
+    public float stuckTimeThreshold = 0.1f;
+
     [Header("Referências")]
     public Transform cameraPivot;
     public TMP_Text speedText;
 
-
     [Header("Câmera")]
-    public float mouseSensitivity = 5f;     // Sensibilidade para mouse
-    public float touchSensitivity = 0.15f;  // Sensibilidade para toque (arrastar para girar)
+    public float mouseSensitivity = 5f;
+    public float touchSensitivity = 0.15f;
 
     [Header("Mobile")]
-    public bool mobileControls = true;      // Ative para usar botões mobile + rotação por toque
+    public bool mobileControls = true;
 
     // Estado interno
     Vector3 momentum = Vector3.zero;
@@ -71,12 +79,21 @@ public class PlayerMovement : MonoBehaviour
     CharacterController controller;
     float cameraPitch = 0f;
 
+    // Detecção de colisão
+    Vector3 lastPosition;
+    float stuckTimer = 0f;
+
+    // Coyote time para drift
+    float lastGroundedTime = 0f;
+    bool wasDriftingBeforeAirborne = false;
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
         if (cameraPivot == null)
             cameraPivot = transform;
         Cursor.lockState = CursorLockMode.Locked;
+        lastPosition = transform.position;
     }
 
     void Update()
@@ -86,7 +103,6 @@ public class PlayerMovement : MonoBehaviour
         // ===== Entrada da câmera (mouse e/ou toque) =====
         if (mobileControls && Input.touchCount > 0)
         {
-            // Usa o primeiro toque que não está sobre UI
             for (int i = 0; i < Input.touchCount; i++)
             {
                 var t = Input.GetTouch(i);
@@ -115,20 +131,39 @@ public class PlayerMovement : MonoBehaviour
 
         // ===== Chão e pulo =====
         isGrounded = controller.isGrounded;
-        if (isGrounded && verticalVel < 0)
+
+        // Atualiza o timer de quando esteve no chão pela última vez
+        if (isGrounded)
+        {
+            lastGroundedTime = Time.time;
             verticalVel = -1f;
+        }
+
+        // Pulo cancela o drift imediatamente
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
+        {
             verticalVel = jumpForce;
+            wasDriftingBeforeAirborne = false;
+            if (isDrifting)
+            {
+                // Cancela drift ao pular intencionalmente
+                isDrifting = false;
+            }
+        }
 
         // ===== Entradas de movimento (desktop + mobile) =====
         bool accelDesktop = Input.GetKey(KeyCode.W);
         bool brakeDesktop = Input.GetKey(KeyCode.LeftShift);
 
-        bool accelerating = (mobileControls ? MobileInput.AccelerateHeld : accelDesktop) && isGrounded;
-        bool brakingOnly = (mobileControls ? MobileInput.BrakeHeld : brakeDesktop) && isGrounded && !accelerating;
-        bool driftButton = (mobileControls ? MobileInput.BrakeHeld : brakeDesktop); // No mobile, Acelerar+Frear = drift
+        // Considera no chão se realmente no chão OU dentro do coyote time
+        bool effectivelyGrounded = isGrounded || (Time.time - lastGroundedTime <= driftCoyoteTime);
 
-        bool driftActive = accelerating && driftButton && (momentum.magnitude > driftThresholdSpeed) && isGrounded;
+        bool accelerating = (mobileControls ? MobileInput.AccelerateHeld : accelDesktop) && effectivelyGrounded;
+        bool brakingOnly = (mobileControls ? MobileInput.BrakeHeld : brakeDesktop) && effectivelyGrounded && !accelerating;
+        bool driftButton = (mobileControls ? MobileInput.BrakeHeld : brakeDesktop);
+
+        // Drift só ativa/mantém se ainda estiver segurando o botão
+        bool driftActive = accelerating && driftButton && (momentum.magnitude > driftThresholdSpeed) && effectivelyGrounded;
 
         // ===== Drift & Boost =====
         if (driftActive)
@@ -138,15 +173,17 @@ public class PlayerMovement : MonoBehaviour
                 isDrifting = true;
                 driftTimer = 0f;
                 driftButtonHeld = true;
+                wasDriftingBeforeAirborne = false;
             }
             driftTimer += dt;
-
-            // Realinha o momentum mais rápido, mas preserva inércia
             momentum = Vector3.Lerp(momentum, transform.forward * momentum.magnitude, driftDampingFactor * dt);
         }
         else
         {
-            if (isDrifting && driftButtonHeld)
+            // Só libera boost se REALMENTE soltou o botão de drift
+            bool actuallyReleasedDriftButton = !driftButton;
+
+            if (isDrifting && driftButtonHeld && actuallyReleasedDriftButton)
             {
                 float driftRatio = Mathf.Clamp01(driftTimer / driftTimeForMaxBoost);
                 float extraBoost = boostMaxValue * driftRatio;
@@ -154,9 +191,15 @@ public class PlayerMovement : MonoBehaviour
                 boostValue = extraBoost;
                 boostTimer = boostMaxDuration * driftRatio;
                 driftButtonHeld = false;
+                wasDriftingBeforeAirborne = false;
             }
-            isDrifting = false;
-            driftTimer = 0f;
+
+            // Só cancela drift se realmente soltou o botão OU caiu (tempo expirou)
+            if (actuallyReleasedDriftButton || (Time.time - lastGroundedTime > driftCoyoteTime))
+            {
+                isDrifting = false;
+                driftTimer = 0f;
+            }
         }
 
         // Decaimento do boost
@@ -179,9 +222,19 @@ public class PlayerMovement : MonoBehaviour
         else if (accelerating)
         {
             Vector3 target = transform.forward * maxForwardSpeed;
-            // Se estiver em drift, reduz velocidade alvo
             if (isDrifting)
                 target *= driftSpeedReduction;
+
+            // Desacelera extra se estiver mudando drasticamente de direção
+            if (momentum.magnitude > 0.1f)
+            {
+                float dot = Vector3.Dot(momentum.normalized, transform.forward);
+                if (dot < 0.3f)
+                {
+                    float decayFactor = Mathf.Lerp(directionChangeDeceleration, 0f, (dot + 1f) / 2f);
+                    momentum = Vector3.MoveTowards(momentum, Vector3.zero, decayFactor * dt);
+                }
+            }
 
             momentum = Vector3.MoveTowards(momentum, target, accelRate * dt);
         }
@@ -200,7 +253,40 @@ public class PlayerMovement : MonoBehaviour
 
         // ===== Movimento final =====
         Vector3 move = momentum + Vector3.up * verticalVel;
+
+        Vector3 positionBeforeMove = transform.position;
         controller.Move(move * dt);
+
+        // ===== Detecção de colisão/travamento =====
+        if (accelerating && momentum.magnitude > collisionThreshold)
+        {
+            float actualMovement = Vector3.Distance(
+                new Vector3(transform.position.x, 0f, transform.position.z),
+                new Vector3(positionBeforeMove.x, 0f, positionBeforeMove.z)
+            );
+
+            float expectedMovement = new Vector3(move.x, 0f, move.z).magnitude * dt;
+            bool isPossiblyStuck = actualMovement < (expectedMovement * 0.2f) && expectedMovement > 0.01f;
+
+            if (isPossiblyStuck)
+            {
+                stuckTimer += dt;
+                if (stuckTimer >= stuckTimeThreshold)
+                {
+                    momentum = Vector3.MoveTowards(momentum, Vector3.zero, collisionDecayRate * dt);
+                }
+            }
+            else
+            {
+                stuckTimer = 0f;
+            }
+        }
+        else
+        {
+            stuckTimer = 0f;
+        }
+
+        lastPosition = transform.position;
     }
 
     void FixedUpdate()
