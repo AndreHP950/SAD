@@ -10,6 +10,8 @@ public class MenuManager : MonoBehaviour
     public int menuLocation = 0;
     GameManager gameManager;
 
+    public Animator mainMenuMaskAnimator;
+
     private void Start()
     {
         gameManager = GameObject.FindWithTag("GameManager").GetComponent<GameManager>();
@@ -44,7 +46,10 @@ public class MenuManager : MonoBehaviour
                 break;
             default:
                 break;
-        } 
+        }
+
+        if (Input.GetKeyDown(KeyCode.O)) mainMenuMaskAnimator.SetTrigger("TurnOn");
+        if (Input.GetKeyDown(KeyCode.P)) mainMenuMaskAnimator.SetTrigger("TurnOff");
     }
 
     #region Menu
