@@ -23,6 +23,8 @@ ShaderVariantCollection:
       variants:
       - keywords: OUTLINE_ON SOFTMASKABLE
         passType: 0
+      - keywords: SOFTMASKABLE
+        passType: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
