@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 public class PauseController : MonoBehaviour
 {
 
-    public GameObject pauseMenu;
+    //public GameObject pauseMenu;
     public bool IsPaused => Time.timeScale < 0.1f;
 
     public void Update()
@@ -23,13 +23,27 @@ public class PauseController : MonoBehaviour
     {
         Time.fixedDeltaTime = 0f;
         Time.timeScale = 0f;
-        pauseMenu.SetActive(true);
+        //pauseMenu.SetActive(true);
+        PullPhone();
     }
 
     public void Resume()
     {
         Time.fixedDeltaTime = 0.02f;
         Time.timeScale = 1f;
-        pauseMenu.SetActive(false);
+        //pauseMenu.SetActive(false);
+        PushPhone();
+    }
+
+    private void PushPhone()
+    {
+        UIManager.instance.UIAnimator.SetTrigger("OpenMap");
+        UIManager.instance.UIAnimator.SetTrigger("PushPhone");
+    }
+
+    private void PullPhone()
+    {
+        UIManager.instance.UIAnimator.SetTrigger("CloseMap");
+        UIManager.instance.UIAnimator.SetTrigger("PullPhone");
     }
 }
