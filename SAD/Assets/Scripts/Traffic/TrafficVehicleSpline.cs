@@ -76,6 +76,14 @@ public class TrafficVehicleSpline : MonoBehaviour
     [Header("Layers por nome (para identificar Player)")]
     public string playerLayerName = "Player";
 
+    [Header("Anti-Interpenetração")]
+    [Tooltip("Quem considerar para despenetração (configure: Vehicle + Player).")]
+    public LayerMask depenetrationMask;
+    [Tooltip("Folga adicionada na correção de saída.")]
+    public float depenetrationPadding = 0.01f;
+    [Tooltip("Raio do probe para vizinhos = extentsMagnitude * este fator.")]
+    public float depenProbeRadiusScale = 1.1f;
+
     // Estado
     float distanceOnRoute;
     float currentSpeed;
@@ -100,6 +108,9 @@ public class TrafficVehicleSpline : MonoBehaviour
     Collider bodyCol;
     int playerLayer = -1;
 
+    // Buffer para consultas
+    readonly Collider[] depenBuffer = new Collider[16];
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -112,6 +123,14 @@ public class TrafficVehicleSpline : MonoBehaviour
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
         playerLayer = LayerMask.NameToLayer(playerLayerName);
+
+        // Se o depenetrationMask não foi setado no Inspector, padrão: Player + a própria layer do veículo.
+        if (depenetrationMask == 0)
+        {
+            int vehicleLayer = gameObject.layer;
+            depenetrationMask = (1 << vehicleLayer);
+            if (playerLayer >= 0) depenetrationMask |= (1 << playerLayer);
+        }
     }
 
     void Start()
@@ -142,7 +161,6 @@ public class TrafficVehicleSpline : MonoBehaviour
         {
             desiredSpeed = 0f;
             SetBlock(BlockKind.Intersection, dt);
-            // TODO: SFX HORN - parado em interseção sem prioridade (beep curto/intervalado)
         }
 
         // 2) Stop zones
@@ -150,7 +168,6 @@ public class TrafficVehicleSpline : MonoBehaviour
         {
             desiredSpeed = 0f;
             SetBlock(BlockKind.StopZone, dt);
-            // (Normalmente não buzinaria em parada programada)
         }
 
         // 3) Sensor frontal
@@ -167,11 +184,9 @@ public class TrafficVehicleSpline : MonoBehaviour
             desiredSpeed = Mathf.Min(desiredSpeed, Mathf.Lerp(0f, maxSpeed, Mathf.Clamp01(factor)));
             if (obsSpeed >= 0f) desiredSpeed = Mathf.Min(desiredSpeed, obsSpeed);
 
-            // muito perto de QUALQUER obstáculo → para de vez
             if (obsDist <= safeDistance + 0.05f)
             {
                 desiredSpeed = 0f;
-                // TODO: SFX HORN - muito perto (Player / Vehicle / Other)
             }
         }
         else if (desiredSpeed > 0f)
@@ -183,17 +198,24 @@ public class TrafficVehicleSpline : MonoBehaviour
         if (touchingSomething && touchingPlayerOrVehicle)
         {
             desiredSpeed = 0f;
-            // TODO: SFX HORN - colisão/encostando (opcional, com cooldown)
         }
 
-        // 5) Anti-deadlock geral (NUNCA avança contra player)
+        // 5) Anti-deadlock geral (NUNCA avança contra player; e não empurra veículo na mesma faixa)
         if (currentSpeed < minSpeedToConsiderMoving && desiredSpeed <= 0.05f)
         {
             stuckTimer += dt;
             if (stuckTimer >= stuckTimeout)
             {
-                if (blockKind != BlockKind.Player)
+                if (blockKind == BlockKind.Vehicle)
+                {
+                    // Só dar nudge se for mão contrária (caso de carros vindo no sentido oposto em outra via)
+                    if (lastObstacleOppositeLane)
+                        desiredSpeed = Mathf.Max(desiredSpeed, courtesyNudgeSpeed);
+                }
+                else if (blockKind != BlockKind.Player)
+                {
                     desiredSpeed = courtesyNudgeSpeed;
+                }
                 stuckTimer = 0f;
             }
         }
@@ -203,7 +225,6 @@ public class TrafficVehicleSpline : MonoBehaviour
         if (blockKind == BlockKind.Vehicle && blockTimer >= maxWaitWhenBlockedByVehicle && lastObstacleOppositeLane)
         {
             desiredSpeed = Mathf.Max(desiredSpeed, forceProceedSpeed);
-            // TODO: SFX HORN - forçar passagem após esperar (buzina mais longa)
         }
 
         // Integração da velocidade
@@ -234,18 +255,49 @@ public class TrafficVehicleSpline : MonoBehaviour
             if (alignToGroundNormal) up = gHit.normal;
         }
 
+        // Corrigir penetrações antes de aplicar MovePosition
+        Vector3 proposed = Vector3.Lerp(rb.position, finalPos, 1f - Mathf.Exp(-12f * dt));
+        proposed = ResolveDepenetration(proposed, rb.rotation);
+
         // Aplicar com Rigidbody
         Quaternion targetRot = Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(forward, up), 1f - Mathf.Exp(-turnLerp * dt));
         rb.MoveRotation(targetRot);
-
-        Vector3 smoothed = Vector3.Lerp(rb.position, finalPos, 1f - Mathf.Exp(-12f * dt));
-        rb.MovePosition(smoothed);
+        rb.MovePosition(proposed);
 
         if (desiredSpeed <= 0.001f)
         {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
+    }
+
+    // Empurra este veículo para fora se a posição proposta estiver penetrando em Player/Veículos
+    Vector3 ResolveDepenetration(Vector3 proposedPos, Quaternion proposedRot)
+    {
+        // Raio para procurar vizinhos próximos
+        float probeRadius = bodyCol.bounds.extents.magnitude * depenProbeRadiusScale;
+        int count = Physics.OverlapSphereNonAlloc(proposedPos, probeRadius, depenBuffer, depenetrationMask, QueryTriggerInteraction.Ignore);
+        if (count <= 0) return proposedPos;
+
+        for (int i = 0; i < count; i++)
+        {
+            var other = depenBuffer[i];
+            if (other == null || other == bodyCol) continue;
+
+            var otherRb = other.attachedRigidbody;
+            Vector3 otherPos = otherRb ? otherRb.position : other.transform.position;
+            Quaternion otherRot = otherRb ? otherRb.rotation : other.transform.rotation;
+
+            if (Physics.ComputePenetration(
+                    bodyCol, proposedPos, proposedRot,
+                    other, otherPos, otherRot,
+                    out Vector3 dir, out float dist))
+            {
+                // empurra para fora + folga
+                proposedPos += dir * (dist + depenetrationPadding);
+            }
+        }
+        return proposedPos;
     }
 
     void OnCollisionStay(Collision collision)
@@ -315,7 +367,7 @@ public class TrafficVehicleSpline : MonoBehaviour
             // *** Checagem de mão contrária ***
             Vector3 otherFwd = other.transform.forward; otherFwd.y = 0f; otherFwd.Normalize();
             float dot = Vector3.Dot(fwd, otherFwd);
-            isOppositeLane = (dot < -0.3f); // ajustável: -1=oposto perfeito, 0=perpendicular
+            isOppositeLane = (dot < -0.3f);
 
             return true;
         }
@@ -356,14 +408,12 @@ public class TrafficVehicleSpline : MonoBehaviour
     {
         currentIntersection = zone;
         intersectionGranted = zone != null && zone.HasPriority(this);
-        // TODO: SFX HORN - chegou numa interseção e vai aguardar (curto)
     }
 
     public void GrantIntersection(IntersectionZone zone)
     {
         if (zone == currentIntersection)
             intersectionGranted = true;
-        // (Normalmente não buzina ao ganhar prioridade)
     }
 
     public void NotifyExitIntersection(IntersectionZone zone)
@@ -381,7 +431,6 @@ public class TrafficVehicleSpline : MonoBehaviour
         if (!obeyStopZones) return;
         if (inStopRoutine) return;
         StartCoroutine(StopRoutine(seconds));
-        // (Não buzinaria em parada programada)
     }
 
     IEnumerator StopRoutine(float seconds)
@@ -439,24 +488,6 @@ public class TrafficVehicleSpline : MonoBehaviour
         {
             blockKind = k;
             blockTimer = 0f;
-
-            // PRIMEIRA vez que entrou no bloqueio: lugar bom para um beep curto.
-            if (k == BlockKind.Player)
-            {
-                // TODO: SFX HORN - player entrou no sensor (beep curto)
-            }
-            else if (k == BlockKind.Vehicle)
-            {
-                // TODO: SFX HORN - veículo entrou no sensor (beep curto)
-            }
-            else if (k == BlockKind.Other)
-            {
-                // TODO: SFX HORN - obstáculo entrou no sensor (curto)
-            }
-            else if (k == BlockKind.Intersection)
-            {
-                // TODO: SFX HORN - aguardando interseção (opcional, volume menor)
-            }
         }
     }
 

@@ -1,19 +1,19 @@
-/*
+Ôªø/*
  * @AndreHP
-    Sistema de movimento com inÈrcia, drift e boost estilo arcade.
+    Sistema de movimento com in√©rcia, drift e boost estilo arcade.
 
-    - O movimento È baseado em um vetor de momentum, simulando fÌsica de AddForce.
-    - Ao segurar W, o jogador acelera gradualmente na direÁ„o da c‚mera, acumulando momentum.
-    - Se a c‚mera gira, o momentum n„o muda instantaneamente, criando efeito de deslizamento/inÈrcia.
+    - O movimento √© baseado em um vetor de momentum, simulando f√≠sica de AddForce.
+    - Ao segurar W, o jogador acelera gradualmente na dire√ß√£o da c√¢mera, acumulando momentum.
+    - Se a c√¢mera gira, o momentum n√£o muda instantaneamente, criando efeito de deslizamento/in√©rcia.
     - Ao soltar W, o momentum desacelera suavemente (slideDeceleration).
     - Shift pode ser usado de duas formas:
-        - Com W e velocidade acima do threshold: ativa drift, reduz velocidade e realinha momentum mais r·pido ‡ direÁ„o atual, acumulando boost proporcional ao tempo em drift.
+        - Com W e velocidade acima do threshold: ativa drift, reduz velocidade e realinha momentum mais r√°pido √† dire√ß√£o atual, acumulando boost proporcional ao tempo em drift.
         - Sem W: funciona como freio, reduzindo momentum mais rapidamente.
-    - Ao soltar o drift, o boost acumulado È adicionado ao momentum e decai gradualmente.
-    - O movimento sÛ È afetado pelo drift/freio se o jogador estiver no ch„o.
-    - O texto de velocidade no Canvas È atualizado em tempo real, mostrando a velocidade atual em km/h.
-    - Detecta colisıes e reduz momentum quando o player est· parado contra obst·culos.
-    - Usa "coyote time" para manter drift ao passar por degraus/pequenas elevaÁıes.
+    - Ao soltar o drift, o boost acumulado √© adicionado ao momentum e decai gradualmente.
+    - O movimento s√≥ √© afetado pelo drift/freio se o jogador estiver no ch√£o.
+    - O texto de velocidade no Canvas √© atualizado em tempo real, mostrando a velocidade atual em km/h.
+    - Detecta colis√µes e reduz momentum quando o player est√° parado contra obst√°culos.
+    - Usa "coyote time" para manter drift ao passar por degraus/pequenas eleva√ß√µes.
 */
 
 using UnityEngine;
@@ -30,7 +30,7 @@ public class PlayerMovement : MonoBehaviour
     public float accelRate = 10f;
     public float brakeRate = 12f;
 
-    [Header("DesaceleraÁ„o")]
+    [Header("Desacelera√ß√£o")]
     public float slideDeceleration = 5f;
     public float directionChangeDeceleration = 8f;
 
@@ -38,7 +38,7 @@ public class PlayerMovement : MonoBehaviour
     public float driftThresholdSpeed = 7f;
     public float driftDampingFactor = 1f;
     public float driftSpeedReduction = 0.5f;
-    public float driftCoyoteTime = 0.2f;  // Tempo de toler‚ncia para manter drift ao sair brevemente do ch„o
+    public float driftCoyoteTime = 0.2f;
 
     [Header("Boost Drift")]
     public float boostMaxValue = 20f;
@@ -51,21 +51,43 @@ public class PlayerMovement : MonoBehaviour
     public float jumpForce = 8f;
     public float airControlFactor = 0.35f;
 
-    [Header("Colis„o")]
+    [Header("Colis√£o")]
     public float collisionDecayRate = 15f;
     public float collisionThreshold = 0.5f;
     public float stuckTimeThreshold = 0.1f;
 
-    [Header("ReferÍncias")]
+    public enum PushEffectMode { VelocityChangeMassScaled, ImpulseMassAware }
+
+    [Header("Empurrar Objetos")]
+    public LayerMask pushableLayers = ~0;
+    public LayerMask unpushableLayers = 0;
+    public float minSpeedToPush = 0.8f;
+    public PushEffectMode pushMode = PushEffectMode.VelocityChangeMassScaled;
+    public float pushPower = 0.8f;
+    public float pushUpwardVelocity = 2f;
+    public float pushTorque = 3f;
+    public float massScaleK = 1f;
+    public float massScaleExponent = 1f;
+    public float massScaleMin = 0.2f;
+    public float massScaleMax = 3f;
+
+    [Header("Refer√™ncias")]
     public Transform cameraPivot;
     public TMP_Text speedText;
 
-    [Header("C‚mera")]
+    [Header("C√¢mera")]
     public float mouseSensitivity = 5f;
     public float touchSensitivity = 0.15f;
 
     [Header("Mobile")]
     public bool mobileControls = true;
+
+    [Header("Power-up: Speed")]
+    [Tooltip("Raiz do VFX (por exemplo, GameObject com UIParticle no Canvas). Ser√° desligado no Awake.")]
+    public GameObject speedLinesUI;
+    [Tooltip("Multiplicador atual aplicado √† velocidade m√°xima (1 = sem boost).")]
+    public float speedBoostMultiplier = 1f;
+    float speedBoostTimer = 0f;
 
     // Estado interno
     Vector3 momentum = Vector3.zero;
@@ -79,13 +101,19 @@ public class PlayerMovement : MonoBehaviour
     CharacterController controller;
     float cameraPitch = 0f;
 
-    // DetecÁ„o de colis„o
+    // Detec√ß√£o de colis√£o
     Vector3 lastPosition;
     float stuckTimer = 0f;
 
     // Coyote time para drift
     float lastGroundedTime = 0f;
     bool wasDriftingBeforeAirborne = false;
+
+    void Awake()
+    {
+        // Garante VFX desligado ao iniciar
+        if (speedLinesUI != null) speedLinesUI.SetActive(false);
+    }
 
     void Start()
     {
@@ -99,70 +127,80 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         float dt = Time.deltaTime;
+        bool isPaused = Time.timeScale < 0.1f;
 
-        // ===== Entrada da c‚mera (mouse e/ou toque) =====
-        if (mobileControls && Input.touchCount > 0)
+        // ===== Entrada da c√¢mera (mouse e/ou toque) =====
+        if (!isPaused)
         {
-            for (int i = 0; i < Input.touchCount; i++)
+            if (mobileControls && Input.touchCount > 0)
             {
-                var t = Input.GetTouch(i);
-                if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(t.fingerId))
-                    continue;
-
-                if (t.phase == TouchPhase.Moved)
+                for (int i = 0; i < Input.touchCount; i++)
                 {
-                    float yaw = t.deltaPosition.x * touchSensitivity;
-                    float pitch = -t.deltaPosition.y * touchSensitivity;
-                    transform.Rotate(Vector3.up * yaw);
-                    cameraPitch = Mathf.Clamp(cameraPitch + pitch, -60f, 60f);
-                    cameraPivot.localEulerAngles = new Vector3(cameraPitch, 0f, 0f);
+                    var t = Input.GetTouch(i);
+                    if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(t.fingerId))
+                        continue;
+
+                    if (t.phase == TouchPhase.Moved)
+                    {
+                        float yaw = t.deltaPosition.x * touchSensitivity;
+                        float pitch = -t.deltaPosition.y * touchSensitivity;
+                        transform.Rotate(Vector3.up * yaw);
+                        cameraPitch = Mathf.Clamp(cameraPitch + pitch, -60f, 60f);
+                        cameraPivot.localEulerAngles = new Vector3(cameraPitch, 0f, 0f);
+                    }
+                    break;
                 }
-                break;
+            }
+            else
+            {
+                float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+                float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+                transform.Rotate(Vector3.up * mouseX);
+                cameraPitch = Mathf.Clamp(cameraPitch - mouseY, -60f, 60f);
+                cameraPivot.localEulerAngles = new Vector3(cameraPitch, 0f, 0f);
             }
         }
-        else
+
+        // ===== Atualiza timer do power-up =====
+        if (speedBoostTimer > 0f)
         {
-            float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
-            float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
-            transform.Rotate(Vector3.up * mouseX);
-            cameraPitch = Mathf.Clamp(cameraPitch - mouseY, -60f, 60f);
-            cameraPivot.localEulerAngles = new Vector3(cameraPitch, 0f, 0f);
+            speedBoostTimer -= dt;
+            if (speedBoostTimer <= 0f)
+            {
+                speedBoostMultiplier = 1f;
+                if (speedLinesUI != null) speedLinesUI.SetActive(false);
+            }
         }
 
-        // ===== Ch„o e pulo =====
+        // ===== Ch√£o e pulo =====
         isGrounded = controller.isGrounded;
 
-        // Atualiza o timer de quando esteve no ch„o pela ˙ltima vez
         if (isGrounded)
         {
             lastGroundedTime = Time.time;
             verticalVel = -1f;
         }
 
-        // Pulo cancela o drift imediatamente
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
         {
             verticalVel = jumpForce;
             wasDriftingBeforeAirborne = false;
             if (isDrifting)
             {
-                // Cancela drift ao pular intencionalmente
                 isDrifting = false;
             }
         }
 
-        // ===== Entradas de movimento (desktop + mobile) =====
+        // ===== Entradas de movimento =====
         bool accelDesktop = Input.GetKey(KeyCode.W);
         bool brakeDesktop = Input.GetKey(KeyCode.LeftShift);
 
-        // Considera no ch„o se realmente no ch„o OU dentro do coyote time
         bool effectivelyGrounded = isGrounded || (Time.time - lastGroundedTime <= driftCoyoteTime);
 
         bool accelerating = (mobileControls ? MobileInput.AccelerateHeld : accelDesktop) && effectivelyGrounded;
         bool brakingOnly = (mobileControls ? MobileInput.BrakeHeld : brakeDesktop) && effectivelyGrounded && !accelerating;
         bool driftButton = (mobileControls ? MobileInput.BrakeHeld : brakeDesktop);
 
-        // Drift sÛ ativa/mantÈm se ainda estiver segurando o bot„o
         bool driftActive = accelerating && driftButton && (momentum.magnitude > driftThresholdSpeed) && effectivelyGrounded;
 
         // ===== Drift & Boost =====
@@ -180,7 +218,6 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            // SÛ libera boost se REALMENTE soltou o bot„o de drift
             bool actuallyReleasedDriftButton = !driftButton;
 
             if (isDrifting && driftButtonHeld && actuallyReleasedDriftButton)
@@ -194,7 +231,6 @@ public class PlayerMovement : MonoBehaviour
                 wasDriftingBeforeAirborne = false;
             }
 
-            // SÛ cancela drift se realmente soltou o bot„o OU caiu (tempo expirou)
             if (actuallyReleasedDriftButton || (Time.time - lastGroundedTime > driftCoyoteTime))
             {
                 isDrifting = false;
@@ -214,18 +250,18 @@ public class PlayerMovement : MonoBehaviour
             momentum = (momentum.magnitude > 0) ? momentum.normalized * newMag : Vector3.zero;
         }
 
-        // ===== AtualizaÁ„o do momentum =====
+        // ===== Atualiza√ß√£o do momentum =====
         if (brakingOnly)
         {
             momentum = Vector3.MoveTowards(momentum, Vector3.zero, brakeRate * dt);
         }
         else if (accelerating)
         {
-            Vector3 target = transform.forward * maxForwardSpeed;
+            float speedCap = maxForwardSpeed * speedBoostMultiplier; // aplica boost de velocidade
+            Vector3 target = transform.forward * speedCap;
             if (isDrifting)
                 target *= driftSpeedReduction;
 
-            // Desacelera extra se estiver mudando drasticamente de direÁ„o
             if (momentum.magnitude > 0.1f)
             {
                 float dot = Vector3.Dot(momentum.normalized, transform.forward);
@@ -243,7 +279,7 @@ public class PlayerMovement : MonoBehaviour
             momentum = Vector3.MoveTowards(momentum, Vector3.zero, slideDeceleration * dt);
         }
 
-        float maxSpeedLimit = maxForwardSpeed + boostMaxValue;
+        float maxSpeedLimit = (maxForwardSpeed * speedBoostMultiplier) + boostMaxValue;
         if (momentum.magnitude > maxSpeedLimit)
             momentum = momentum.normalized * maxSpeedLimit;
 
@@ -257,7 +293,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 positionBeforeMove = transform.position;
         controller.Move(move * dt);
 
-        // ===== DetecÁ„o de colis„o/travamento =====
+        // ===== Detec√ß√£o de colis√£o/travamento =====
         if (accelerating && momentum.magnitude > collisionThreshold)
         {
             float actualMovement = Vector3.Distance(
@@ -301,5 +337,59 @@ public class PlayerMovement : MonoBehaviour
             float speedKmh = realSpeed * 3.6f;
             speedText.text = $"{speedKmh:F0} Km/h";
         }
+    }
+
+    // ===== Empurrar rigidbodies com CharacterController =====
+    void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if ((unpushableLayers.value & (1 << hit.gameObject.layer)) != 0)
+            return;
+        if ((pushableLayers.value & (1 << hit.gameObject.layer)) == 0)
+            return;
+
+        Rigidbody rb = hit.collider.attachedRigidbody;
+        if (rb == null || rb.isKinematic)
+            return;
+        if (hit.moveDirection.y < -0.3f)
+            return;
+
+        Vector3 horizVel = new Vector3(momentum.x, 0f, momentum.z);
+        float speed = horizVel.magnitude;
+        if (speed < minSpeedToPush)
+            return;
+
+        Vector3 dir = horizVel.sqrMagnitude > 0.0001f ? horizVel.normalized : hit.moveDirection;
+
+        if (pushMode == PushEffectMode.VelocityChangeMassScaled)
+        {
+            float m = Mathf.Max(rb.mass, 0.01f);
+            float massScale = Mathf.Clamp(massScaleK / Mathf.Pow(m, massScaleExponent), massScaleMin, massScaleMax);
+
+            Vector3 velChange = dir * (pushPower * speed * massScale);
+            velChange.y += pushUpwardVelocity * massScale;
+            rb.AddForce(velChange, ForceMode.VelocityChange);
+
+            Vector3 torqueAxis = Vector3.Cross(Vector3.up, dir);
+            if (torqueAxis.sqrMagnitude > 0.0001f)
+                rb.AddTorque(torqueAxis.normalized * (pushTorque * massScale), ForceMode.VelocityChange);
+        }
+        else
+        {
+            Vector3 impulse = dir * (pushPower * speed);
+            impulse.y += pushUpwardVelocity;
+            rb.AddForce(impulse, ForceMode.Impulse);
+
+            Vector3 torqueAxis = Vector3.Cross(Vector3.up, dir);
+            if (torqueAxis.sqrMagnitude > 0.0001f)
+                rb.AddTorque(torqueAxis.normalized * pushTorque, ForceMode.Impulse);
+        }
+    }
+
+    // -------- API p√∫blica: Power-up Speed --------
+    public void ActivateSpeedBoost(float duration, float multiplier = 1.3f)
+    {
+        speedBoostMultiplier = Mathf.Max(speedBoostMultiplier, multiplier);
+        speedBoostTimer = Mathf.Max(speedBoostTimer, duration);
+        if (speedLinesUI != null) speedLinesUI.SetActive(true);
     }
 }

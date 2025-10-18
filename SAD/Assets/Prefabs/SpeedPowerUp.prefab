@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1670628016219317924
+--- !u!1 &8920408628484517373
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,48 +8,48 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3447045801948191548}
-  - component: {fileID: 2938410982797124290}
-  - component: {fileID: 7826948754411477176}
-  - component: {fileID: 5124297758506037050}
-  - component: {fileID: 5464206866723773787}
-  m_Layer: 7
-  m_Name: RoadBlock
+  - component: {fileID: 3275642417372183225}
+  - component: {fileID: 5513961986349404830}
+  - component: {fileID: 6626268753602292711}
+  - component: {fileID: 927949819381323665}
+  - component: {fileID: 5474472091692028631}
+  m_Layer: 0
+  m_Name: SpeedPowerUp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3447045801948191548
+--- !u!4 &3275642417372183225
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1670628016219317924}
+  m_GameObject: {fileID: 8920408628484517373}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -196.47, y: -27.9, z: -129.45}
-  m_LocalScale: {x: 3, y: 1.221, z: 1.0178078}
+  m_LocalPosition: {x: 51.56, y: -7.78, z: -51.92}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &2938410982797124290
+--- !u!33 &5513961986349404830
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1670628016219317924}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &7826948754411477176
+  m_GameObject: {fileID: 8920408628484517373}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &6626268753602292711
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1670628016219317924}
+  m_GameObject: {fileID: 8920408628484517373}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -66,7 +66,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 1f486cff3c679574fb96726c0f7f84b1, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -88,13 +88,13 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &5124297758506037050
-BoxCollider:
+--- !u!135 &927949819381323665
+SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1670628016219317924}
+  m_GameObject: {fileID: 8920408628484517373}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -103,27 +103,25 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Radius: 0.74
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &5464206866723773787
+--- !u!114 &5474472091692028631
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1670628016219317924}
+  m_GameObject: {fileID: 8920408628484517373}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9777e7f504e26c84bb9c5964f3f8ad9d, type: 3}
+  m_Script: {fileID: 11500000, guid: 47db2d63b8a45e7439f6958a60f233bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boxCenter: {x: 0, y: 1.5, z: 0}
-  boxSize: {x: 0.8, y: 1, z: 0.8}
-  scoreAmount: 350
-  scoreController: {fileID: 0}
-  onlyOnce: 0
-  rearmDelay: 5
+  duration: 5
+  multiplier: 1.3
+  destroyOnPickup: 1
+  pickupVFX: {fileID: 0}

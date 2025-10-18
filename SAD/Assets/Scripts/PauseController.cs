@@ -24,6 +24,8 @@ public class PauseController : MonoBehaviour
         Time.fixedDeltaTime = 0f;
         Time.timeScale = 0f;
         //pauseMenu.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         PullPhone();
     }
 
@@ -32,6 +34,8 @@ public class PauseController : MonoBehaviour
         Time.fixedDeltaTime = 0.02f;
         Time.timeScale = 1f;
         //pauseMenu.SetActive(false);
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         PushPhone();
     }
 
