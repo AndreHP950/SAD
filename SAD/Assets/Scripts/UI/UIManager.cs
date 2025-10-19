@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
@@ -29,6 +30,8 @@ public class UIManager : MonoBehaviour
         gameUI = transform.Find("GameUI");
         transition = transform.Find("Transition");
         if (!transition.gameObject.activeInHierarchy) transition.gameObject.SetActive(true);
+        if (SceneManager.GetActiveScene().name == "Game" && gameUI.gameObject.activeInHierarchy == false) gameUI.gameObject.SetActive(true);
+        else if (SceneManager.GetActiveScene().name == "MainMenu") gameUI.gameObject.SetActive(false);
     }
 
     public void TimesUp(bool activate)

@@ -19,6 +19,9 @@ public class GameManager : MonoBehaviour
     public int character = 1;
 
     private bool isLoadingScene = false;
+    public bool isExiting = false;
+
+    public bool isMobile = false;
 
     private void Awake()
     {
@@ -45,6 +48,8 @@ public class GameManager : MonoBehaviour
 
     public void EndGame(int score)
     {
+        if (Time.timeScale != 1f) Time.timeScale = 1f;
+        if (Time.fixedDeltaTime != 0.02f) Time.fixedDeltaTime = 0.02f;
         returningFromGame = true;
         matchScore = score;
         StartCoroutine(EndGameEvents());
@@ -52,13 +57,17 @@ public class GameManager : MonoBehaviour
 
     IEnumerator StartGameEvents()
     {
+        if (Time.timeScale != 1f) Time.timeScale = 1f;
+        if (Time.fixedDeltaTime != 0.02f) Time.fixedDeltaTime = 0.02f;
+        isExiting = false;
+
         if (isLoadingScene) yield break;
         isLoadingScene = true;
 
-        UIManager.instance.TimesUp(false);
         UIManager.instance.UIAnimator.SetTrigger("Close");
         yield return new WaitForSeconds(1f);
 
+        UIManager.instance.TimesUp(false);
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("Game", LoadSceneMode.Single);
         while (!asyncLoad.isDone)
         {
@@ -68,6 +77,8 @@ public class GameManager : MonoBehaviour
         isLoadingScene = false;
 
         UIManager.instance.gameUI.gameObject.SetActive(true);
+
+        yield return new WaitForSeconds(1f);
         UIManager.instance.UIAnimator.SetTrigger("Open");
     }
 
@@ -75,7 +86,7 @@ public class GameManager : MonoBehaviour
     {
         if (isLoadingScene) yield break;
         isLoadingScene = true;
-        yield return new WaitForSeconds(4f);
+        if (isExiting) yield return new WaitForSeconds(4f);
         UIManager.instance.UIAnimator.SetTrigger("Close");
         yield return new WaitForSeconds(2f);
         UIManager.instance.gameUI.gameObject.SetActive(false);
