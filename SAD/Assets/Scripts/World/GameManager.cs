@@ -74,9 +74,13 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
+        yield return null;
+
         isLoadingScene = false;
 
         UIManager.instance.gameUI.gameObject.SetActive(true);
+
+        AudioManager.Instance.sfxSource = GameObject.Find("Player").GetComponent<AudioSource>();
 
         yield return new WaitForSeconds(1f);
         UIManager.instance.UIAnimator.SetTrigger("Open");

@@ -20,6 +20,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
 using SAD.InputSystem;
+using System.Collections;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
@@ -109,9 +110,9 @@ public class PlayerMovement : MonoBehaviour
     float lastGroundedTime = 0f;
     bool wasDriftingBeforeAirborne = false;
 
-    void Awake()
+    private void Awake()
     {
-        // Garante VFX desligado ao iniciar
+        speedLinesUI = UIManager.instance.transform.Find("UIParticle").gameObject;
         if (speedLinesUI != null) speedLinesUI.SetActive(false);
     }
 

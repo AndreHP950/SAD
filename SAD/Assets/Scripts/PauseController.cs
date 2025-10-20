@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using UnityEngine.WSA;
 
 public class PauseController : MonoBehaviour
 {
@@ -90,6 +89,7 @@ public class PauseController : MonoBehaviour
                     UIManager.instance.UIAnimator.SetTrigger("OpenRestart");
                     break;
                 case 3:
+                    GetSliderValues();
                     UIManager.instance.UIAnimator.SetTrigger("OpenSettings");
                     break;
                 case 4:
@@ -147,6 +147,13 @@ public class PauseController : MonoBehaviour
                 }
             }
         }
+    }
+
+    void GetSliderValues()
+    {
+        UIManager.instance.masterSlider.value = PlayerPrefs.GetFloat("masterSlider", 1f);
+        UIManager.instance.musicSlider.value = PlayerPrefs.GetFloat("musicSlider", 1f);
+        UIManager.instance.effectsSlider.value = PlayerPrefs.GetFloat("effectsSlider", 1f);
     }
 
     public void Pause()

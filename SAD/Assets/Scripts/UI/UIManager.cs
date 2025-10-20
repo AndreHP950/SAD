@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
@@ -12,6 +13,11 @@ public class UIManager : MonoBehaviour
 
     [Header("Animators")]
     public Animator UIAnimator;
+
+    [Header("Settings Sliders")]
+    public Slider masterSlider;
+    public Slider musicSlider;
+    public Slider effectsSlider;
 
     private void Awake()
     {
@@ -29,9 +35,22 @@ public class UIManager : MonoBehaviour
         UIAnimator = GetComponent<Animator>();
         gameUI = transform.Find("GameUI");
         transition = transform.Find("Transition");
+
         if (!transition.gameObject.activeInHierarchy) transition.gameObject.SetActive(true);
         if (SceneManager.GetActiveScene().name == "Game" && gameUI.gameObject.activeInHierarchy == false) gameUI.gameObject.SetActive(true);
         else if (SceneManager.GetActiveScene().name == "MainMenu") gameUI.gameObject.SetActive(false);
+    }
+
+    private void Start()
+    {
+        masterSlider.onValueChanged.RemoveAllListeners();
+        masterSlider.onValueChanged.AddListener(AudioManager.Instance.SetVolumeMaster);
+
+        musicSlider.onValueChanged.RemoveAllListeners();
+        musicSlider.onValueChanged.AddListener(AudioManager.Instance.SetVolumeMusic);
+
+        effectsSlider.onValueChanged.RemoveAllListeners();
+        effectsSlider.onValueChanged.AddListener(AudioManager.Instance.SetVolumeEffects);
     }
 
     public void TimesUp(bool activate)
