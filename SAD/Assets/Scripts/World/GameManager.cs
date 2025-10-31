@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
     public bool returningFromGame = false;
     int matchScore;
     public int character = 1;
+    public enum Character { Cat = 0, Dog = 1};
 
     private bool isLoadingScene = false;
     public bool isExiting = false;

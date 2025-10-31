@@ -80,6 +80,11 @@ public class PlayerMovement : MonoBehaviour
     public float mouseSensitivity = 5f;
     public float touchSensitivity = 0.15f;
 
+    // novo pivot para First-Person Chase (usado apenas no minigame)
+    [Header("FPV Pivot (Minigame)")]
+    [Tooltip("Pivot usado pela vcam durante o minigame (ponto da cabeça). Se vazio, usa cameraPivot.")]
+    public Transform fpvCameraPivot;
+
     [Header("Mobile")]
     public bool mobileControls = true;
 
@@ -322,7 +327,6 @@ public class PlayerMovement : MonoBehaviour
         {
             stuckTimer = 0f;
         }
-
         lastPosition = transform.position;
     }
 
@@ -392,5 +396,12 @@ public class PlayerMovement : MonoBehaviour
         speedBoostMultiplier = Mathf.Max(speedBoostMultiplier, multiplier);
         speedBoostTimer = Mathf.Max(speedBoostTimer, duration);
         if (speedLinesUI != null) speedLinesUI.SetActive(true);
+    }
+
+    // novo: expõe velocidade horizontal atual do player (m/s)
+    public float GetHorizontalSpeed()
+    {
+        Vector3 h = new Vector3(momentum.x, 0f, momentum.z);
+        return h.magnitude;
     }
 }
