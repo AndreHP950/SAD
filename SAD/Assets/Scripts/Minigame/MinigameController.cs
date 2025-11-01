@@ -45,7 +45,7 @@ public class MinigameController : MonoBehaviour
     FPVCameraBobbing cameraBobbing;
     MonoBehaviour thirdPersonCamComp;
 
-    RatAI activeRat;
+    ChasableAI activeTarget;
     float timer;
 
     // player renderers storage
@@ -59,29 +59,29 @@ public class MinigameController : MonoBehaviour
     }
 
     // Iniciado pelo RatTrigger: apenas recebe o RatAI (que já tem suas splines)
-    public void StartRatChase(RatAI rat)
+    public void StartChaseMinigame(ChasableAI target)
     {
         if (state != MinigameState.Idle) return;
-    if (rat == null) return;
+        if (target == null) return;
 
-    activeRat = rat;
-    activeRat.StartRunning(this);
+        activeTarget = target;
+        activeTarget.StartRunning(this);
 
-    // pega player
-    playerMovement = FindFirstObjectByType<PlayerMovement>();
-    if (playerMovement == null) { Debug.LogWarning("PlayerMovement not found."); return; }
+        // pega player
+        playerMovement = FindFirstObjectByType<PlayerMovement>();
+        if (playerMovement == null) { Debug.LogWarning("PlayerMovement not found."); return; }
 
-    playerTransform = playerMovement.transform;
-    playerCameraPivot = playerMovement.fpvCameraPivot != null ? playerMovement.fpvCameraPivot : playerMovement.cameraPivot;
-    if (playerCameraPivot == null) { Debug.LogWarning("Player camera pivot not set."); return; }
+        playerTransform = playerMovement.transform;
+        playerCameraPivot = playerMovement.fpvCameraPivot != null ? playerMovement.fpvCameraPivot : playerMovement.cameraPivot;
+        if (playerCameraPivot == null) { Debug.LogWarning("Player camera pivot not set."); return; }
 
-    // Força player a olhar para o rato
-    Vector3 directionToRat = (rat.transform.position - playerTransform.position);
-    directionToRat.y = 0; // mantém rotação apenas no plano horizontal
-    if (directionToRat.sqrMagnitude > 0.001f)
-    {
-        playerTransform.rotation = Quaternion.LookRotation(directionToRat.normalized, Vector3.up);
-    }
+        // Força player a olhar para o rato
+        Vector3 directionToRat = (activeTarget.transform.position - playerTransform.position);
+        directionToRat.y = 0; // mantém rotação apenas no plano horizontal
+        if (directionToRat.sqrMagnitude > 0.001f)
+        {
+            playerTransform.rotation = Quaternion.LookRotation(directionToRat.normalized, Vector3.up);
+        }
         // salva estado da Main Camera
         if (mainCam != null)
         {
@@ -176,22 +176,21 @@ public class MinigameController : MonoBehaviour
             return;
         }
 
-        if (activeRat != null && playerMovement != null)
+        if (activeTarget != null && playerMovement != null)
         {
-            float d = activeRat.DistanceToPoint(playerTransform.position);
+            float d = activeTarget.DistanceToPoint(playerTransform.position);
             if (d <= catchDistance)
             {
-                // captura: destrói rato e finaliza com sucesso
-                activeRat.OnCaught();
+                activeTarget.OnCaught();
                 EndChase(true);
             }
         }
     }
 
     // chamado pelo RatAI quando o rato termina a spline
-    public void NotifyRatEscaped(RatAI rat)
+     public void NotifyTargetEscaped(ChasableAI target)
     {
-        if (rat != activeRat) return;
+        if (target != activeTarget) return;
         EndChase(false);
     }
 
@@ -200,7 +199,7 @@ public class MinigameController : MonoBehaviour
         if (state != MinigameState.Running) return;
         state = MinigameState.Ending;
 
-        if (activeRat != null) activeRat.StopRunning();
+        if (activeTarget != null) activeTarget.StopRunning();
 
         // restaura main camera
         if (mainCam != null)
@@ -240,7 +239,7 @@ public class MinigameController : MonoBehaviour
         if (success && playerMovement != null)
             playerMovement.ActivateSpeedBoost(speedBoostDuration, speedBoostMultiplier);
 
-        activeRat = null;
+        activeTarget = null;
         state = MinigameState.Idle;
     }
 }

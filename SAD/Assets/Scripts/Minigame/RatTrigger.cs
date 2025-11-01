@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(SphereCollider))]
-public class RatTrigger : MonoBehaviour
+public class ChaseMinigameTrigger : MonoBehaviour
 {
     [Header("Configuração")]
     [Tooltip("Raio da área de detecção do minigame")]
@@ -12,6 +12,9 @@ public class RatTrigger : MonoBehaviour
     [Header("Referências")]
     [Tooltip("Referência opcional ao controlador do minigame. Se nulo, procura na cena.")]
     public MinigameController controller;
+
+    [Tooltip("Define qual personagem pode ativar (0=Gato, 1=Cachorro)")]
+    public int requiredCharacter = 0; // 0=Gato (rato), 1=Cachorro (galinha)
 
     private bool minigameStarted = false;
     private SphereCollider sphereCollider;
@@ -51,12 +54,12 @@ public class RatTrigger : MonoBehaviour
         Gizmos.color = minigameStarted ? Color.red : gizmoColor;
         Gizmos.DrawWireSphere(transform.position, detectionRadius);
 
-        // Desenha linha até o rato se houver
-        var ratAI = GetComponentInParent<RatAI>();
-        if (ratAI != null)
+        // Desenha linha até o alvo se houver
+        var target = GetComponentInParent<ChasableAI>();
+        if (target != null)
         {
             Gizmos.color = Color.yellow;
-            Gizmos.DrawLine(transform.position, ratAI.transform.position);
+            Gizmos.DrawLine(transform.position, target.transform.position);
         }
     }
 
@@ -66,14 +69,14 @@ public class RatTrigger : MonoBehaviour
         if (!other.CompareTag("Player")) return;
         if (controller == null) return;
 
-        // Só inicia se player for gato
-        if (GameManager.instance != null && GameManager.instance.character == 0)
+        // Verifica se é o personagem correto
+        if (GameManager.instance != null && GameManager.instance.character == requiredCharacter)
         {
-            var ratAI = GetComponentInParent<RatAI>();
-            if (ratAI != null)
+            var target = GetComponentInParent<ChasableAI>();
+            if (target != null)
             {
                 minigameStarted = true;
-                controller.StartRatChase(ratAI);
+                controller.StartChaseMinigame(target);
             }
         }
     }

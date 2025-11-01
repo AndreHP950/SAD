@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
-public class RatAI : MonoBehaviour
+public class ChasableAI : MonoBehaviour
 {
     [Header("Configuração do Minigame")]
     public float chaseDuration = 10f;
@@ -125,12 +125,12 @@ public class RatAI : MonoBehaviour
         active = false;
         
         // Notifica área de trigger
-        var trigger = GetComponentInChildren<RatTrigger>();
+        var trigger = GetComponentInChildren<ChaseMinigameTrigger>();
         if (trigger != null)
             trigger.OnMinigameEnded();
             
         if (owner != null)
-            owner.NotifyRatEscaped(this);
+            owner.NotifyTargetEscaped(this);
 
         Destroy(gameObject);
     }
@@ -143,7 +143,7 @@ public class RatAI : MonoBehaviour
     public void OnCaught()
     {
         // Notifica área de trigger
-        var trigger = GetComponentInChildren<RatTrigger>();
+        var trigger = GetComponentInChildren<ChaseMinigameTrigger>();
         if (trigger != null)
             trigger.OnMinigameEnded();
             
