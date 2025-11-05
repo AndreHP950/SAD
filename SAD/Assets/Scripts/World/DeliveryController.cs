@@ -10,6 +10,7 @@ public class Mailbox
 {
     public GameObject mailbox;
     public int target;
+    public bool available;
 }
 
 public class DeliveryController : MonoBehaviour
@@ -50,12 +51,17 @@ public class DeliveryController : MonoBehaviour
     [Header("Areas")]
     public Collider[] areaColliders;
 
+    [Header("Minimap")]
+    public MinimapTargetIndicator minimapTargetIndicator;
+
     void Start()
     {
         player = GameObject.FindWithTag("Player");
+        deliveryTime = GameObject.Find("DeliveryTime").GetComponent<TextMeshProUGUI>();
         playerBackpack = player.GetComponent<PlayerBackpack>();
         playerCollision = player.GetComponent<PlayerCollisionDetection>();
         scoreController = GetComponent<ScoreController>();
+        minimapTargetIndicator = GameObject.Find("UIManager/GameUI/Phone/Screen/Map").GetComponent<MinimapTargetIndicator>();
 
         GetMailboxes();
         if (mailboxes.Count > 1) CreateDelivery(-1);
@@ -138,6 +144,8 @@ public class DeliveryController : MonoBehaviour
         {
             if (i != boxNumber)
             {
+                mailboxes[i].available = true;
+
                 do
                 {
                     mailboxes[i].target = Random.Range(0, mailboxes.Count);
@@ -164,46 +172,54 @@ public class DeliveryController : MonoBehaviour
                     if (marker != null) marker.gameObject.SetActive(true);
                 }
             }
+            else mailboxes[i].available = false;
         }      
     }
 
     public void StartDelivery(int boxNumber)
     {
-        // SFX: Toca som de coleta de caixa
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlayCollectBoxSFX();
-        deliverGoal = mailboxes[boxNumber].target;
-        mailboxDistance = Vector3.Distance(mailboxes[boxNumber].mailbox.transform.position, mailboxes[mailboxes[boxNumber].target].mailbox.transform.position);
-        currentDeliveryTime = (int)mailboxDistance / DistanceDivisionValue;
-        for (int i = 0; i < mailboxes.Count; i++)
+        if (mailboxes[boxNumber].available)
         {
-            Transform markers = mailboxes[i].mailbox.transform.Find("Markers");
-            if (markers != null)
+            Debug.Log($"Started Delivery: {boxNumber}");
+
+            // SFX: Toca som de coleta de caixa
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayCollectBoxSFX();
+            deliverGoal = mailboxes[boxNumber].target;
+            mailboxDistance = Vector3.Distance(mailboxes[boxNumber].mailbox.transform.position, mailboxes[mailboxes[boxNumber].target].mailbox.transform.position);
+            currentDeliveryTime = (int)mailboxDistance / DistanceDivisionValue;
+            for (int i = 0; i < mailboxes.Count; i++)
             {
-                foreach (Transform marker in markers)
+                Transform markers = mailboxes[i].mailbox.transform.Find("Markers");
+                if (markers != null)
                 {
-                    if (marker.gameObject.activeSelf)
+                    foreach (Transform marker in markers)
                     {
-                        marker.gameObject.SetActive(false);
+                        if (marker.gameObject.activeSelf)
+                        {
+                            marker.gameObject.SetActive(false);
+                        }
                     }
                 }
-            }
-            if (i == deliverGoal)
-            {
-                Transform goalMarker = mailboxes[i].mailbox.transform.Find("Markers/TargetMarker");
-                goalMarker.gameObject.SetActive(true);
-            }
+                if (i == deliverGoal)
+                {
+                    Transform goalMarker = mailboxes[i].mailbox.transform.Find("Markers/TargetMarker");
+                    goalMarker.gameObject.SetActive(true);
+                }
 
-            
+
+            }
+            GetPackage(mailboxes[boxNumber].mailbox.transform);
+            minimapTargetIndicator.target = mailboxes[mailboxes[boxNumber].target].mailbox.transform;
+            isDelivering = true;
         }
-        GetPackage(mailboxes[boxNumber].mailbox.transform);
-        isDelivering = true;
     }
 
     public void EndDelivery(int boxNumber, bool scoring)
     {
         if (scoring)
         {
+            Debug.Log($"Ended Delivery: {boxNumber}");
             // SFX: Toca som de entrega bem-sucedida
             if (AudioManager.Instance != null)
                 AudioManager.Instance.PlayDeliverySuccessSFX();
@@ -221,6 +237,7 @@ public class DeliveryController : MonoBehaviour
             Transform goalMarker = mailboxes[boxNumber].mailbox.transform.Find("Markers/TargetMarker");
             goalMarker.gameObject.SetActive(false);
         }
+        minimapTargetIndicator.target = null;
         isDelivering = false;
         isFailed = false; 
     }

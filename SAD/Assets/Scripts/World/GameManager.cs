@@ -80,7 +80,7 @@ public class GameManager : MonoBehaviour
 
         UIManager.instance.gameUI.gameObject.SetActive(true);
 
-        AudioManager.Instance.sfxSource = GameObject.Find("Player").GetComponent<AudioSource>();
+        AudioManager.Instance.sfxSource = GameObject.FindWithTag("Player").GetComponent<AudioSource>();
 
         yield return new WaitForSeconds(1f);
         UIManager.instance.UIAnimator.SetTrigger("Open");
