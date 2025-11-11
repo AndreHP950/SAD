@@ -5,23 +5,22 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.SocialPlatforms.Impl;
 
-//[System.Serializable]
-//public class Character
-//{
-//    public string name;
-//}
-
+[DefaultExecutionOrder(-100)]
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
-    public bool returningFromGame = false;
     int matchScore;
-    public int character = 1;
-    public enum Character { Cat = 0, Dog = 1};
+    //public int character = 1;
+    //public enum Character { Cat = 0, Dog = 1};
+    [Header("Characters")]
+    public int character = 0;
+    public CharacterData[] characterList;
+    public CharacterData CurrentCharacter => characterList[character];
 
+    [Header("Bools")]
+    public bool returningFromGame = false;
     private bool isLoadingScene = false;
     public bool isExiting = false;
-
     public bool isMobile = false;
 
     private void Awake()
@@ -93,7 +92,7 @@ public class GameManager : MonoBehaviour
 
         UIManager.instance.gameUI.gameObject.SetActive(true);
 
-        AudioManager.Instance.sfxSource = GameObject.Find("Player").GetComponent<AudioSource>();
+        AudioManager.Instance.sfxSource = GameObject.FindWithTag("Player").GetComponent<AudioSource>();
 
         yield return new WaitForSeconds(1f);
         UIManager.instance.UIAnimator.SetTrigger("Open");

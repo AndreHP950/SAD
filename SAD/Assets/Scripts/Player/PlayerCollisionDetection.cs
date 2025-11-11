@@ -25,14 +25,12 @@ public class PlayerCollisionDetection : MonoBehaviour
                 if (!deliveryController.isDelivering)
                 {
                     deliveryController.StartDelivery(boxNumber);
-                    Debug.Log($"Started Delivery: {boxNumber}");
                 }
                 else if (!deliveryController.isFailed)
                 {
                     if (boxNumber == deliveryController.deliverGoal)
                     {
                         deliveryController.EndDelivery(boxNumber, true);
-                        Debug.Log($"Ended Delivery: {boxNumber}");
                     }
                 }
             }  

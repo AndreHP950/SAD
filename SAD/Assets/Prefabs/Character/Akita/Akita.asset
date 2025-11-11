@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a38044928163b224cb4f779a9d5a110e, type: 3}
+  m_Name: Akita
+  m_EditorClassIdentifier: 
+  characterName: Akita
+  characterPrefab: {fileID: 925524478360155604, guid: 56fb47b282991e646908fd22d7331480, type: 3}
+  characterIcon: {fileID: 0}
+  spawnPosition: {x: -154, y: 0.15, z: 78}
+  spawnRotation: {x: 0, y: -1, z: 0, w: -0.00000004371139}
