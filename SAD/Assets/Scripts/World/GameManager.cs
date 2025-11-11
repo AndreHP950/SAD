@@ -5,22 +5,21 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.SocialPlatforms.Impl;
 
-//[System.Serializable]
-//public class Character
-//{
-//    public string name;
-//}
-
+[DefaultExecutionOrder(-100)]
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
-    public bool returningFromGame = false;
     int matchScore;
-    public int character = 1;
 
+    [Header("Characters")]
+    public int character = 0;
+    public CharacterData[] characterList;
+    public CharacterData CurrentCharacter => characterList[character];
+
+    [Header("Bools")]
+    public bool returningFromGame = false;
     private bool isLoadingScene = false;
     public bool isExiting = false;
-
     public bool isMobile = false;
 
     private void Awake()
