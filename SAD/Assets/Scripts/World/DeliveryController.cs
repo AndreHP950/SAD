@@ -21,6 +21,7 @@ public class DeliveryController : MonoBehaviour
     GameObject player;
     
     PlayerCollisionDetection playerCollision;
+    MatchTimeController matchTimeController;
 
     [Header("Distance Values")]
     [SerializeField] int distanceClose = 25;
@@ -62,6 +63,7 @@ public class DeliveryController : MonoBehaviour
         playerCollision = player.GetComponent<PlayerCollisionDetection>();
         scoreController = GetComponent<ScoreController>();
         minimapTargetIndicator = GameObject.Find("UIManager/GameUI/Phone/Screen/Map").GetComponent<MinimapTargetIndicator>();
+        matchTimeController = GetComponent<MatchTimeController>();
 
         GetMailboxes();
         if (mailboxes.Count > 1) CreateDelivery(-1);
@@ -188,6 +190,8 @@ public class DeliveryController : MonoBehaviour
             deliverGoal = mailboxes[boxNumber].target;
             mailboxDistance = Vector3.Distance(mailboxes[boxNumber].mailbox.transform.position, mailboxes[mailboxes[boxNumber].target].mailbox.transform.position);
             currentDeliveryTime = (int)mailboxDistance / DistanceDivisionValue;
+            matchTimeController.currentTime += (int)(currentDeliveryTime / 2);
+
             for (int i = 0; i < mailboxes.Count; i++)
             {
                 Transform markers = mailboxes[i].mailbox.transform.Find("Markers");

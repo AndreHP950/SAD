@@ -10,6 +10,7 @@ public class UIManager : MonoBehaviour
     [Header("Base UI")]
     public Transform gameUI;
     public Transform transition;
+    public Transform mobileHUD;
 
     [Header("Animators")]
     public Animator UIAnimator;
@@ -35,6 +36,7 @@ public class UIManager : MonoBehaviour
         UIAnimator = GetComponent<Animator>();
         gameUI = transform.Find("GameUI");
         transition = transform.Find("Transition");
+        mobileHUD = transform.Find("GameUI/MobileUI");
 
         if (!transition.gameObject.activeInHierarchy) transition.gameObject.SetActive(true);
         if (SceneManager.GetActiveScene().name == "Game" && gameUI.gameObject.activeInHierarchy == false) gameUI.gameObject.SetActive(true);
@@ -51,6 +53,9 @@ public class UIManager : MonoBehaviour
 
         effectsSlider.onValueChanged.RemoveAllListeners();
         effectsSlider.onValueChanged.AddListener(AudioManager.Instance.SetVolumeEffects);
+
+        if (GameManager.instance.isMobile) mobileHUD.gameObject.SetActive(true);
+        else mobileHUD.gameObject.SetActive(false);
     }
 
     public void TimesUp(bool activate)

@@ -2,14 +2,19 @@ using UnityEngine;
 
 public class MinimapCameraController : MonoBehaviour
 {
-    GameObject player;
-    GameObject playerCamera;
+    [SerializeField] GameObject player;
+    [SerializeField] GameObject playerCamera;
+    [SerializeField] MinimapTargetIndicator targetIndicator;
     [SerializeField] float rotationSpeed = 5f;
+    
 
     private void Start()
     {
         player = GameObject.FindWithTag("Player");
         playerCamera = Camera.main.gameObject;
+
+        targetIndicator = GameObject.FindWithTag("PhoneMap").GetComponent<MinimapTargetIndicator>();
+        targetIndicator.minimapCamera = this.GetComponent<Camera>();
     }
     void LateUpdate()
     {

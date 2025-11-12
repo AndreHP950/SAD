@@ -23,8 +23,9 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     [Header("References")]
     public Transform cameraTransform;
     public TextMeshProUGUI speedText;
-
+     
     CharacterController characterController;
+    PlayerInputManager playerInputManager;
     private Vector3 velocity;
     private Vector3 moveVelocity;
     private Vector3 lastPos;
@@ -32,6 +33,7 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
+        playerInputManager = GetComponent<PlayerInputManager>();
 
         if (cameraTransform == null && Camera.main != null)
             cameraTransform = Camera.main.transform;
@@ -47,8 +49,8 @@ public class PlayerMovementThirdPerson : MonoBehaviour
 
     private void Movement()
     {
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
+        float horizontal = playerInputManager.GetHorizontal();
+        float vertical = playerInputManager.GetVertical();
 
         Vector3 camForward = cameraTransform.forward;
         Vector3 camRight = cameraTransform.right;
@@ -66,7 +68,7 @@ public class PlayerMovementThirdPerson : MonoBehaviour
         moveVelocity = Vector3.Lerp(moveVelocity, targetVelocity, lerpSpeed * Time.deltaTime);
 
         //Jump
-        if (Input.GetKeyDown(KeyCode.Space) && characterController.isGrounded)
+        if (playerInputManager.GetJump() && characterController.isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }

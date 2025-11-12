@@ -16,6 +16,8 @@ public class PauseController : MonoBehaviour
 
     Transform gameTime;
     Transform score;
+    Transform mobileUI;
+
 
     public GameObject[] menusInPause;
 
@@ -28,6 +30,7 @@ public class PauseController : MonoBehaviour
 
         gameTime = transform.Find("GameUI/GameTime");
         score = transform.Find("GameUI/Score");
+        mobileUI = transform.Find("GameUI/MobileUI");
     }
 
 
@@ -171,6 +174,7 @@ public class PauseController : MonoBehaviour
 
             gameTime.gameObject.SetActive(false);
             score.gameObject.SetActive(false);
+            mobileUI.gameObject.SetActive(false);
         }  
     }
 
