@@ -13,9 +13,11 @@ public class GameManager : MonoBehaviour
     
     [Header("Characters")]
     public int character = 0;
+    public AvailableCharacters selectedCharacter;
     public CharacterData[] characterList;
     public enum Character { Cat = 0, Dog = 1 };
-    public CharacterData CurrentCharacter => characterList[character];
+    public enum AvailableCharacters { Felicia = 0, Doug = 1, Akita = 2 };
+    public CharacterData CurrentCharacter => characterList[(int)selectedCharacter];
 
     [Header("Bools")]
     public bool returningFromGame = false;

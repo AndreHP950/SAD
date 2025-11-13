@@ -1,8 +1,10 @@
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using Unity.Jobs;
+using Unity.VisualScripting;
 using UnityEngine;
 
 [System.Serializable]
@@ -17,6 +19,7 @@ public class DeliveryController : MonoBehaviour
 {
     public bool isDelivering = false;
     public bool isFailed = false;
+    private bool startChangingArea = false;
     public int deliverGoal = 0;
     GameObject player;
     
@@ -50,7 +53,12 @@ public class DeliveryController : MonoBehaviour
     public List<Mailbox> mailboxes;
 
     [Header("Areas")]
+    public PlayableAreas currentArea;
     public Collider[] areaColliders;
+    private int areasCompleted = 0;
+    public Transform[] areaBridges;
+    public enum PlayableAreas { Area1 = 1, Area2 = 2, Area3 = 3, All = 4 };
+
 
     [Header("Minimap")]
     public MinimapTargetIndicator minimapTargetIndicator;
@@ -64,6 +72,8 @@ public class DeliveryController : MonoBehaviour
         scoreController = GetComponent<ScoreController>();
         minimapTargetIndicator = GameObject.Find("UIManager/GameUI/Phone/Screen/Map").GetComponent<MinimapTargetIndicator>();
         matchTimeController = GetComponent<MatchTimeController>();
+
+        currentArea = (PlayableAreas)((int)GameManager.instance.CurrentCharacter.startArea);
 
         GetMailboxes();
         if (mailboxes.Count > 1) CreateDelivery(-1);
@@ -84,9 +94,9 @@ public class DeliveryController : MonoBehaviour
                 deliveryTime.text = null;
             }
         }
-        else
+        else if (startChangingArea)
         {
-            deliveryTime.text = null;
+            UnlockNextArea();
         }
     }
 
@@ -98,17 +108,17 @@ public class DeliveryController : MonoBehaviour
 
         foreach (GameObject m in mailbox)
         {
-            string currentArea = "Unknown";
+            string thisArea = "Unknown";
 
             foreach (Collider area in areaColliders)
             {
                 if (area.bounds.Contains(m.transform.position))
                 {
-                    currentArea = area.name;
+                    thisArea = area.name;
                     break;
                 }
             }
-            switch (currentArea)
+            switch (thisArea)
             {
                 case "Area 1":
                     mailboxesArea1.Add(new Mailbox { mailbox = m });
@@ -122,7 +132,7 @@ public class DeliveryController : MonoBehaviour
             }
         }
 
-        switch (GameManager.instance.character)
+        switch ((int)currentArea)
         {
             case 1:
                 mailboxes = mailboxesArea1;
@@ -241,6 +251,7 @@ public class DeliveryController : MonoBehaviour
             Transform goalMarker = mailboxes[boxNumber].mailbox.transform.Find("Markers/TargetMarker");
             goalMarker.gameObject.SetActive(false);
         }
+        deliveryTime.text = null;
         minimapTargetIndicator.target = null;
         isDelivering = false;
         isFailed = false; 
@@ -263,6 +274,18 @@ public class DeliveryController : MonoBehaviour
         else
         {
             EndDelivery(playerCollision.boxNumber, false);
+        }
+    }
+
+    void StopDeliverySystem()
+    {
+        for (int i = 0; i < mailboxes.Count; i++)
+        {
+            mailboxes[i].available = false;
+            mailboxes[i].mailbox.transform.Find("Markers/TargetMarker").gameObject.SetActive(false);
+            mailboxes[i].mailbox.transform.Find("Markers/DistanceClose").gameObject.SetActive(false);
+            mailboxes[i].mailbox.transform.Find("Markers/DistanceMedium").gameObject.SetActive(false);
+            mailboxes[i].mailbox.transform.Find("Markers/DistanceFar").gameObject.SetActive(false);
         }
     }
 
@@ -292,5 +315,33 @@ public class DeliveryController : MonoBehaviour
             marker.gameObject.SetActive(false);
 
         }
+    }
+
+    public void UnlockNextArea()
+    {
+        StopDeliverySystem();
+
+        areasCompleted++;
+
+        switch (currentArea)
+        {
+            case PlayableAreas.Area1:
+                currentArea = PlayableAreas.Area2;
+                StartAreaChange(2);
+                break;
+            case PlayableAreas.Area2:
+                currentArea = PlayableAreas.Area3;
+                StartAreaChange(3);
+                break;
+            case PlayableAreas.Area3:
+                currentArea = PlayableAreas.Area1;
+                StartAreaChange(1);
+                break;
+        }
+    }
+
+    public void StartAreaChange(int nextArea)
+    {
+        
     }
 }
