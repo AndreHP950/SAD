@@ -45,10 +45,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   character: 0
+  selectedCharacter: 0
   characterList:
   - {fileID: 11400000, guid: 7f63c6d3ae1391c4b930e6b62665fe0b, type: 2}
   - {fileID: 11400000, guid: 268b2a8fa7760034d86ba20cf180b548, type: 2}
   - {fileID: 11400000, guid: 91249cc94519b5a41a5d1f2e6ef7a3b9, type: 2}
   returningFromGame: 0
   isExiting: 0
-  isMobile: 0
+  isMobile: 1

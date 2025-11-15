@@ -11,6 +11,9 @@ TagManager:
   - Area1
   - Area2
   - Area3
+  - AreaStartingPoint
+  - PhoneMap
+  - AreaCollectable
   layers:
   - Default
   - TransparentFX

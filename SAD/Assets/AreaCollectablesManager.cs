@@ -2,13 +2,26 @@ using UnityEngine;
 
 public class AreaCollectablesManager : MonoBehaviour
 {
+    [SerializeField] private int collectableArea;
 
-
-    private void OnTriggerEnter(Collider other)
+    private void Start()
     {
-        if (other.gameObject.CompareTag("Area Collectable"))
+        switch (transform.parent.name)
         {
-
+            case "Area1":
+                collectableArea = 1;
+                break;
+            case "Area2":
+                collectableArea = 2;
+                break;
+            case "Area3":
+                collectableArea = 3;
+                break;
         }
+    }
+
+    public int GetArea()
+    {
+        return collectableArea;
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -11,6 +12,8 @@ public class UIManager : MonoBehaviour
     public Transform gameUI;
     public Transform transition;
     public Transform mobileHUD;
+    public Joystick joystick;
+    public Button jumpButton;
 
     [Header("Animators")]
     public Animator UIAnimator;
@@ -37,6 +40,8 @@ public class UIManager : MonoBehaviour
         gameUI = transform.Find("GameUI");
         transition = transform.Find("Transition");
         mobileHUD = transform.Find("GameUI/MobileUI");
+        joystick = GameObject.Find("GameUI/MobileUI/Joystick").GetComponent<Joystick>();
+        jumpButton = GameObject.Find("GameUI/MobileUI/Jump").GetComponent<Button>();
 
         if (!transition.gameObject.activeInHierarchy) transition.gameObject.SetActive(true);
         if (SceneManager.GetActiveScene().name == "Game" && gameUI.gameObject.activeInHierarchy == false) gameUI.gameObject.SetActive(true);

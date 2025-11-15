@@ -367,6 +367,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24e40f1a5c7d3ff4a85f155f7418bbb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  joystick: {fileID: 0}
+  jumpButton: {fileID: 0}
+  sensitivityMobile: 0.1
+  sensitivityPC: 1.25
+  orbital: {fileID: 0}
+  raycaster: {fileID: 0}
 --- !u!1 &2166370461734095390
 GameObject:
   m_ObjectHideFlags: 0

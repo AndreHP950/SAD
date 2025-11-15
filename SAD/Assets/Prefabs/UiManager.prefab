@@ -10019,7 +10019,7 @@ GameObject:
   - component: {fileID: 1059935198087470733}
   m_Layer: 5
   m_Name: Map
-  m_TagString: Untagged
+  m_TagString: PhoneMap
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

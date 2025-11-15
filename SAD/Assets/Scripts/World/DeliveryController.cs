@@ -19,7 +19,7 @@ public class DeliveryController : MonoBehaviour
 {
     public bool isDelivering = false;
     public bool isFailed = false;
-    private bool startChangingArea = false;
+    public bool startChangingArea = false;
     public int deliverGoal = 0;
     GameObject player;
     
@@ -56,7 +56,8 @@ public class DeliveryController : MonoBehaviour
     public PlayableAreas currentArea;
     public Collider[] areaColliders;
     private int areasCompleted = 0;
-    public Transform[] areaBridges;
+    public Transform[] areaStartingPoints;
+    private int nextAreaValue;
     public enum PlayableAreas { Area1 = 1, Area2 = 2, Area3 = 3, All = 4 };
 
 
@@ -70,7 +71,7 @@ public class DeliveryController : MonoBehaviour
         playerBackpack = player.GetComponent<PlayerBackpack>();
         playerCollision = player.GetComponent<PlayerCollisionDetection>();
         scoreController = GetComponent<ScoreController>();
-        minimapTargetIndicator = GameObject.Find("UIManager/GameUI/Phone/Screen/Map").GetComponent<MinimapTargetIndicator>();
+        minimapTargetIndicator = UIManager.instance.transform.Find("GameUI/Phone/Screen/Map").GetComponent<MinimapTargetIndicator>();
         matchTimeController = GetComponent<MatchTimeController>();
 
         currentArea = (PlayableAreas)((int)GameManager.instance.CurrentCharacter.startArea);
@@ -95,6 +96,11 @@ public class DeliveryController : MonoBehaviour
             }
         }
         else if (startChangingArea)
+        {
+            UnlockNextArea();
+        }
+
+        if (Input.GetKeyDown(KeyCode.L))
         {
             UnlockNextArea();
         }
@@ -135,16 +141,16 @@ public class DeliveryController : MonoBehaviour
         switch ((int)currentArea)
         {
             case 1:
-                mailboxes = mailboxesArea1;
+                mailboxes.AddRange(mailboxesArea1);
                 break;
             case 2:
-                mailboxes = mailboxesArea2;
+                mailboxes.AddRange(mailboxesArea2);
                 break;
             case 3:
-                mailboxes = mailboxesArea3;
+                mailboxes.AddRange(mailboxesArea3);
                 break;
             default:
-                mailboxes = mailboxesArea1;
+                mailboxes.AddRange(mailboxesArea1);
                 break;
         }
     }
@@ -317,7 +323,7 @@ public class DeliveryController : MonoBehaviour
         }
     }
 
-    public void UnlockNextArea()
+    private void UnlockNextArea()
     {
         StopDeliverySystem();
 
@@ -338,10 +344,51 @@ public class DeliveryController : MonoBehaviour
                 StartAreaChange(1);
                 break;
         }
+
+        startChangingArea = false;
     }
 
-    public void StartAreaChange(int nextArea)
+    private void StartAreaChange(int nextArea)
     {
-        
+        nextAreaValue = nextArea - 1;
+
+        matchTimeController.currentTime += (int)((int)Vector3.Distance(player.transform.position, areaStartingPoints[nextAreaValue].transform.position) / DistanceDivisionValue / 2);
+
+        minimapTargetIndicator.target = areaStartingPoints[nextAreaValue];
+        areaStartingPoints[nextAreaValue].gameObject.SetActive(true);
+
+        //Add bridge lowering animation
+
+        mailboxes.Clear();
+
+        if (areasCompleted >= 3)
+        {
+            mailboxes.AddRange(mailboxesArea1);
+            mailboxes.AddRange(mailboxesArea2);
+            mailboxes.AddRange(mailboxesArea3);
+        }
+        else
+        {
+            switch (nextArea)
+            {
+                case 1:
+                    mailboxes.AddRange(mailboxesArea1);
+                    break;
+                case 2:
+                    mailboxes.AddRange(mailboxesArea2);
+                    break;
+                case 3:
+                    mailboxes.AddRange(mailboxesArea3);
+                    break;
+            }
+        }
+    }
+
+    public void EndAreaChange()
+    {
+        CreateDelivery(-1);
+
+        minimapTargetIndicator.target = null;
+        areaStartingPoints[nextAreaValue].gameObject.SetActive(false);
     }
 }
