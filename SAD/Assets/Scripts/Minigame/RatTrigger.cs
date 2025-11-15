@@ -70,7 +70,7 @@ public class ChaseMinigameTrigger : MonoBehaviour
         if (controller == null) return;
 
         // Verifica se é o personagem correto
-        if (GameManager.instance != null && GameManager.instance.character == requiredCharacter)
+        if (GameManager.instance != null && (int)GameManager.instance.CurrentCharacter.animalType == requiredCharacter)
         {
             var target = GetComponentInParent<ChasableAI>();
             if (target != null)

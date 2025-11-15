@@ -12,10 +12,8 @@ public class GameManager : MonoBehaviour
     int matchScore;
     
     [Header("Characters")]
-    public int character = 0;
     public AvailableCharacters selectedCharacter;
     public CharacterData[] characterList;
-    public enum Character { Cat = 0, Dog = 1 };
     public enum AvailableCharacters { Felicia = 0, Doug = 1, Akita = 2 };
     public CharacterData CurrentCharacter => characterList[(int)selectedCharacter];
 
@@ -44,16 +42,16 @@ public class GameManager : MonoBehaviour
     }
     public void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha0))
-        {
-            character = (int)Character.Cat;
-            Debug.Log($"[CHEAT] Trocou para Gato");
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            character = (int)Character.Dog;
-            Debug.Log($"[CHEAT] Trocou para Cachorro");
-        }
+        //if (Input.GetKeyDown(KeyCode.Alpha0))
+        //{
+        //    character = (int)Character.Cat;
+        //    Debug.Log($"[CHEAT] Trocou para Gato");
+        //}
+        //else if (Input.GetKeyDown(KeyCode.Alpha1))
+        //{
+        //    character = (int)Character.Dog;
+        //    Debug.Log($"[CHEAT] Trocou para Cachorro");
+        //}
     }
     public void StartGame()
     {
