@@ -17,10 +17,11 @@ public class SpeedBoostPickup : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
+        Debug.Log($"SpeedBoostPickup triggered by {other.name}");
         if (!other.CompareTag("Player")) return;
 
         // PlayerMovement geralmente está no mesmo GO do CharacterController
-        var pm = other.GetComponent<PlayerMovement>() ?? other.GetComponentInParent<PlayerMovement>();
+        var pm = other.GetComponent<PlayerMovementThirdPerson>() ?? other.GetComponentInParent<PlayerMovementThirdPerson>();
         if (pm == null) return;
 
         pm.ActivateSpeedBoost(duration, multiplier);

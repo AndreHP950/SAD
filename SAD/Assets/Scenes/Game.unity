@@ -807,6 +807,14 @@ PrefabInstance:
       propertyPath: isMobile
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6845845521659754411, guid: 38e3a1d1ac9b0d0429ba02bea559fac9, type: 3}
+      propertyPath: character
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6845845521659754411, guid: 38e3a1d1ac9b0d0429ba02bea559fac9, type: 3}
+      propertyPath: selectedCharacter
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7265937093177387390, guid: 38e3a1d1ac9b0d0429ba02bea559fac9, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -9541,7 +9549,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 3071
+    m_Bits: 7167
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -10284,6 +10292,14 @@ PrefabInstance:
     - target: {fileID: 4888156159861293306, guid: 497638e78cdab1942a4747b6e5b64b30, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5175632743032749790, guid: 497638e78cdab1942a4747b6e5b64b30, type: 3}
+      propertyPath: HorizontalAxis.Value
+      value: 173.9867
+      objectReference: {fileID: 0}
+    - target: {fileID: 5175632743032749790, guid: 497638e78cdab1942a4747b6e5b64b30, type: 3}
+      propertyPath: HorizontalAxis.Center
+      value: 173.9867
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -44034,6 +44050,10 @@ PrefabInstance:
     - target: {fileID: 8920408628484517373, guid: 273449a4d6fdb5245b2d7861b378a7bd, type: 3}
       propertyPath: m_Name
       value: SpeedPowerUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 8920408628484517373, guid: 273449a4d6fdb5245b2d7861b378a7bd, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

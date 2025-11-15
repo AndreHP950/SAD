@@ -1,7 +1,5 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 using Unity.Cinemachine;
 
 public class MinigameController : MonoBehaviour
@@ -38,7 +36,7 @@ public class MinigameController : MonoBehaviour
     Quaternion previousMainCamLocalRot;
     float previousMainCamFOV;
 
-    PlayerMovement playerMovement;
+    PlayerMovementThirdPerson playerMovement;
     Transform playerTransform;
     Transform playerCameraPivot;
 
@@ -68,11 +66,14 @@ public class MinigameController : MonoBehaviour
         activeTarget.StartRunning(this);
 
         // pega player
-        playerMovement = FindFirstObjectByType<PlayerMovement>();
+        playerMovement = FindFirstObjectByType<PlayerMovementThirdPerson>();
         if (playerMovement == null) { Debug.LogWarning("PlayerMovement not found."); return; }
 
+        // Ativa o modo de movimento preciso
+        playerMovement.SetMovementMode(PlayerMovementThirdPerson.MovementMode.Minigame);
+
         playerTransform = playerMovement.transform;
-        playerCameraPivot = playerMovement.fpvCameraPivot != null ? playerMovement.fpvCameraPivot : playerMovement.cameraPivot;
+        playerCameraPivot = playerMovement.fpvCameraPivot != null ? playerMovement.fpvCameraPivot : playerMovement.transform;
         if (playerCameraPivot == null) { Debug.LogWarning("Player camera pivot not set."); return; }
 
         // Força player a olhar para o rato
@@ -188,7 +189,7 @@ public class MinigameController : MonoBehaviour
     }
 
     // chamado pelo RatAI quando o rato termina a spline
-     public void NotifyTargetEscaped(ChasableAI target)
+    public void NotifyTargetEscaped(ChasableAI target)
     {
         if (target != activeTarget) return;
         EndChase(false);
@@ -198,6 +199,12 @@ public class MinigameController : MonoBehaviour
     {
         if (state != MinigameState.Running) return;
         state = MinigameState.Ending;
+
+        // Volta ao modo de movimento normal
+        if (playerMovement != null)
+        {
+            playerMovement.SetMovementMode(PlayerMovementThirdPerson.MovementMode.Normal);
+        }
 
         if (activeTarget != null) activeTarget.StopRunning();
 

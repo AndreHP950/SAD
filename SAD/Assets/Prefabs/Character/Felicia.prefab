@@ -171,6 +171,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 972621344770205134}
   - {fileID: 2734859522646247235}
   - {fileID: 1696369319535911972}
   - {fileID: 1168228375522991834}
@@ -218,12 +219,25 @@ MonoBehaviour:
   acceleration: 10
   deceleration: 8
   rotation: 10
+  minigameSpeed: 10
+  minigameRotation: 4
   gravity: -9.81
   jumpHeight: 2
   slideSpeed: 2
   slopeRayLength: 1.5
+  pushableLayers:
+    serializedVersion: 2
+    m_Bits: 4096
+  minSpeedToPush: 0.8
+  pushPower: 0.8
+  massScaleK: 1
+  massScaleExponent: 1
+  massScaleMin: 0.2
+  massScaleMax: 3
+  speedLinesUI: {fileID: 0}
   cameraTransform: {fileID: 0}
   speedText: {fileID: 3357903691229661032}
+  fpvCameraPivot: {fileID: 0}
 --- !u!114 &4224580151866358703
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -239,6 +253,7 @@ MonoBehaviour:
   deliveryController: {fileID: 0}
   boxNumber: 0
   mailboxRange: 0
+  areaCollectablesList: []
 --- !u!114 &3372086651114220944
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -739,6 +754,37 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.037, z: -0.211}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1923528321919989325}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6899713143310806291
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 972621344770205134}
+  m_Layer: 3
+  m_Name: FPVCameraPivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &972621344770205134
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6899713143310806291}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -2.336, z: 0.438}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

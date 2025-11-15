@@ -9,7 +9,7 @@ public class FPVCameraBobbing : MonoBehaviour
     public float frequency = 10f;
     public float speedThreshold = 2f;
 
-    PlayerMovement pm;
+    PlayerMovementThirdPerson pm;
     float baseY;
 
     void Start()
@@ -18,7 +18,7 @@ public class FPVCameraBobbing : MonoBehaviour
     }
 
     // Chamado pelo MinigameController: anexa/desanexa o player
-    public void SetPlayerMovement(PlayerMovement p)
+    public void SetPlayerMovement(PlayerMovementThirdPerson p)
     {
         pm = p;
     }
