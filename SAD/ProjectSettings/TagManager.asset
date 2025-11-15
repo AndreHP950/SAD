@@ -14,6 +14,7 @@ TagManager:
   - AreaStartingPoint
   - PhoneMap
   - AreaCollectable
+  - Water
   layers:
   - Default
   - TransparentFX

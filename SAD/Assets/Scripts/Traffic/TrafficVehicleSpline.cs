@@ -3,6 +3,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(AudioSource))] // Garante que sempre haverá um AudioSource
 public class TrafficVehicleSpline : MonoBehaviour
 {
     public enum VehicleType { Car, Bus }
@@ -55,6 +56,10 @@ public class TrafficVehicleSpline : MonoBehaviour
     [Tooltip("Velocidade usada para 'forçar a passagem' após o tempo de espera.")]
     public float forceProceedSpeed = 1.0f;
 
+    [Header("Áudio")]
+    [Tooltip("Tempo que o player precisa ficar na frente para a buzina começar.")]
+    public float timeToStartHonking = 2.0f;
+
     [Header("Ground Snap")]
     [Tooltip("Layer(s) do terreno/rua.")]
     public LayerMask groundMask = 1 << 0;
@@ -91,6 +96,8 @@ public class TrafficVehicleSpline : MonoBehaviour
     Rigidbody rb;
     Collider bodyCol;
     int playerLayer = -1;
+    AudioSource hornSource; // AudioSource dedicado para a buzina
+    bool isHonking = false;
 
     readonly Collider[] depenBuffer = new Collider[16];
     readonly RaycastHit[] sensorBuffer = new RaycastHit[16];
@@ -101,6 +108,7 @@ public class TrafficVehicleSpline : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         bodyCol = GetComponent<Collider>();
+        hornSource = GetComponent<AudioSource>(); // Pega o AudioSource para a buzina
 
         rb.useGravity = false;
         rb.isKinematic = false;
@@ -196,10 +204,11 @@ public class TrafficVehicleSpline : MonoBehaviour
             {
                 desiredSpeed = 0f;
 
-                // 🔊 SFX: Player entrou na frente (buzina aqui)
+                // Toca som de buzina se o player bloquear o caminho
                 if (hitKind == BlockKind.Player)
                 {
-                    // TODO: AudioManager.Play("Horn_PlayerBlock");
+                    if (AudioManager.Instance != null)
+                        AudioManager.Instance.PlaySFX("CarHorn");
                 }
             }
             else
@@ -215,6 +224,9 @@ public class TrafficVehicleSpline : MonoBehaviour
         {
             ClearBlock();
         }
+
+        // Lógica de Áudio para Buzina e Freio
+        HandleAudio(hitKind);
 
         // 4) Evita empurrar fisicamente
         if (touchingSomething && touchingPlayerOrVehicle)
@@ -251,7 +263,12 @@ public class TrafficVehicleSpline : MonoBehaviour
 
         // Integração da velocidade
         float accel = (desiredSpeed >= currentSpeed) ? acceleration : comfortableDeceleration;
-        if (desiredSpeed <= 0.001f) accel *= hardBrakeDamping;
+        // Toca som de freio brusco
+        if (desiredSpeed <= 0.001f && currentSpeed > 1.0f) 
+        {
+            accel *= hardBrakeDamping;
+            // O som de freio agora é controlado em HandleAudio
+        }
         currentSpeed = Mathf.MoveTowards(currentSpeed, desiredSpeed, accel * dt);
 
         // Avança na rota
@@ -300,6 +317,47 @@ public class TrafficVehicleSpline : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void HandleAudio(BlockKind currentHit)
+    {
+        // Lógica de Freio: Toca se estiver freando por causa do player
+        if (currentHit == BlockKind.Player && currentSpeed > 1.0f && IsBrakingHard())
+        {
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX("CarBreak");
+        }
+
+        // Lógica da Buzina
+        if (currentHit == BlockKind.Player && blockTimer >= timeToStartHonking)
+        {
+            // Se não estiver buzinando, começa o loop
+            if (!isHonking)
+            {
+                if (AudioManager.Instance != null)
+                {
+                    // Usamos o AudioSource local para controlar o loop
+                    AudioManager.Instance.PlayLoopingSound(hornSource, "CarHorn");
+                    isHonking = true;
+                }
+            }
+        }
+        else
+        {
+            // Se estiver buzinando mas o player saiu da frente, para o loop
+            if (isHonking)
+            {
+                hornSource.Stop();
+                isHonking = false;
+            }
+        }
+    }
+
+    private bool IsBrakingHard()
+    {
+        // Considera que está freando se a velocidade desejada for quase zero
+        // e a velocidade atual ainda for significativa.
+        return maxSpeed > 0 && (currentSpeed / maxSpeed) > 0.1f;
     }
 
     Vector3 ResolveDepenetration(Vector3 proposedPos, Quaternion proposedRot)
@@ -351,7 +409,7 @@ public class TrafficVehicleSpline : MonoBehaviour
 
         Vector3 origin = sensorOrigin ? sensorOrigin.position : transform.position + Vector3.up * sensorUpOffset + fwd * sensorForwardOffset;
 
-        int hitsCount = 0;
+        int hitsCount;
         if (sensorShape == SensorShape.Box)
         {
             Vector3 halfExt = new Vector3(sensorSize.x * 0.5f, sensorSize.y * 0.5f, 0.01f);

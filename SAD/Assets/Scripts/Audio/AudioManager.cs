@@ -1,126 +1,145 @@
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance;
 
-    [Header("SFX Clips")]
-    public AudioClip collectBoxSFX;
-    public AudioClip deliverySuccessSFX;
-    public AudioClip deliveryFailedSFX;
-    // Adicione mais SFX aqui conforme necessário
-
     [Header("Audio Sources")]
     public AudioMixer audioMixer;
-    public AudioSource sfxSource;
-    public AudioSource musicSource; // Para música de fundo futura
+    public AudioSource sfxSource;        // Para efeitos curtos (coleta, clique, etc.)
+    public AudioSource musicSource;      // Para a música tema do menu
+    public AudioSource ambienceSource;   // Para o som de fundo do tráfego
 
-    [Header("Volume Settings")]
-    [Range(0f, 1f)] public float sfxVolume = 1f;
-    [Range(0f, 1f)] public float musicVolume = 0.7f;
+    // Dicionário para guardar os clipes de áudio carregados
+    private Dictionary<string, AudioClip> audioClips = new Dictionary<string, AudioClip>();
 
     void Awake()
     {
-        // Singleton pattern
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            LoadAudioClips(); // Carrega todos os clipes de áudio
         }
         else
         {
             Destroy(gameObject);
+            return;
         }
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     void Start()
     {
         if (audioMixer != null)
         {
-            audioMixer.SetFloat("masterVol", PlayerPrefs.GetFloat("masterVol", 1f));
-            audioMixer.SetFloat("musicVol", PlayerPrefs.GetFloat("musicVol", 1f));
-            audioMixer.SetFloat("effectsVol", PlayerPrefs.GetFloat("effectsVol", 1f));
+            audioMixer.SetFloat("masterVol", PlayerPrefs.GetFloat("masterVol", 0f));
+            audioMixer.SetFloat("musicVol", PlayerPrefs.GetFloat("musicVol", 0f));
+            audioMixer.SetFloat("effectsVol", PlayerPrefs.GetFloat("effectsVol", 0f));
         }
-
-        //if (sfxSource != null)
-        //    sfxSource.volume = sfxVolume;
-        //if (musicSource != null)
-        //    musicSource.volume = musicVolume;
+        
+        // Inicia o áudio da cena atual
+        OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
     }
 
-    public void PlaySFX(AudioClip clip)
+    private void OnDestroy()
     {
-        if (sfxSource != null && clip != null)
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void LoadAudioClips()
+    {
+        AudioClip[] clips = Resources.LoadAll<AudioClip>("Audio");
+        foreach (AudioClip clip in clips)
         {
-            sfxSource.PlayOneShot(clip);
+            if (!audioClips.ContainsKey(clip.name))
+            {
+                audioClips.Add(clip.name, clip);
+            }
+        }
+        Debug.Log($"AudioManager: {audioClips.Count} clipes de áudio carregados.");
+    }
+
+    public void PlaySFX(string clipName)
+    {
+        if (audioClips.TryGetValue(clipName, out AudioClip clip))
+        {
+            if (sfxSource != null)
+            {
+                sfxSource.PlayOneShot(clip);
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"AudioManager: SFX '{clipName}' não encontrado!");
         }
     }
 
-    public void PlayCollectBoxSFX()
+    public void PlayLoopingSound(AudioSource source, string clipName)
     {
-        PlaySFX(collectBoxSFX);
+        if (source == null) return;
+
+        if (audioClips.TryGetValue(clipName, out AudioClip clip))
+        {
+            source.clip = clip;
+            source.loop = true;
+            source.Play();
+        }
+        else
+        {
+            Debug.LogWarning($"AudioManager: Som em loop '{clipName}' não encontrado!");
+        }
     }
 
-    public void PlayDeliverySuccessSFX()
+    public void StopAllSounds()
     {
-        PlaySFX(deliverySuccessSFX);
+        sfxSource?.Stop();
+        musicSource?.Stop();
+        ambienceSource?.Stop();
     }
 
-    public void PlayDeliveryFailedSFX()
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        PlaySFX(deliveryFailedSFX);
+        StopAllSounds();
+
+        // Assumindo que a cena de menu se chama "MainMenu"
+        if (scene.name == "MainMenu") 
+        {
+            PlayLoopingSound(musicSource, "ThemeSong");
+        }
+        // Assumindo que a cena de jogo se chama "Game" 
+        else if (scene.name == "Game") 
+        {
+            PlayLoopingSound(ambienceSource, "TrafficSound");
+        }
     }
 
-    //// Métodos para controle de volume
-    //public void SetSFXVolume(float volume)
-    //{
-    //    sfxVolume = Mathf.Clamp01(volume);
-    //    if (sfxSource != null)
-    //        sfxSource.volume = sfxVolume;
-    //}
-
-    //public void SetMusicVolume(float volume)
-    //{
-    //    musicVolume = Mathf.Clamp01(volume);
-    //    if (musicSource != null)
-    //        musicSource.volume = musicVolume;
-    //}
-
+    // --- Métodos de Volume ---
     public void SetVolumeMaster(float sliderValue)
     {
-        float db = Mathf.Log10(Mathf.Max(sliderValue, 0.0001f)) * 40f;
-
+        float db = Mathf.Log10(Mathf.Max(sliderValue, 0.0001f)) * 20f;
         audioMixer.SetFloat("masterVol", db);
-
-        PlayerPrefs.SetFloat("masterSlider", sliderValue);
         PlayerPrefs.SetFloat("masterVol", db);
-
         PlayerPrefs.Save();
     }
 
     public void SetVolumeMusic(float sliderValue)
     {
-        float db = Mathf.Log10(Mathf.Max(sliderValue, 0.0001f)) * 40f;
-
+        float db = Mathf.Log10(Mathf.Max(sliderValue, 0.0001f)) * 20f;
         audioMixer.SetFloat("musicVol", db);
-
-        PlayerPrefs.SetFloat("musicSlider", sliderValue);
         PlayerPrefs.SetFloat("musicVol", db);
-
         PlayerPrefs.Save();
     }
 
     public void SetVolumeEffects(float sliderValue)
     {
-        float db = Mathf.Log10(Mathf.Max(sliderValue, 0.0001f)) * 40f;
-
+        float db = Mathf.Log10(Mathf.Max(sliderValue, 0.0001f)) * 20f;
         audioMixer.SetFloat("effectsVol", db);
-
-        PlayerPrefs.SetFloat("effectsSlider", sliderValue);
         PlayerPrefs.SetFloat("effectsVol", db);
-
         PlayerPrefs.Save();
     }
 }

@@ -28,7 +28,11 @@ public class SpeedBoostPickup : MonoBehaviour
 
         if (pickupVFX != null)
             Instantiate(pickupVFX, transform.position, transform.rotation);
-
+        // SFX: Toca o som de power-up
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX("PowerUP");
+        }
         if (destroyOnPickup) Destroy(gameObject);
         else gameObject.SetActive(false);
     }

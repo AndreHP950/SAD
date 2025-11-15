@@ -227,21 +227,27 @@ public class DeliveryController : MonoBehaviour
         {
             Debug.Log($"Started Delivery: {boxNumber}");
 
-            // Pega a referência do pacote que foi coletado
             GameObject packageToDeliver = mailboxes[boxNumber].spawnedPackage;
-
-            // Limpa a referência para que a animação pare
             mailboxes[boxNumber].spawnedPackage = null;
 
-            // Entrega o pacote (agora sem animação) para o script do jogador
-            if (packageToDeliver != null)
+            // Verifica se o jogador tem o componente PlayerBackpack
+            if (playerBackpack != null)
             {
+                // Se tiver, entrega o pacote para ele gerenciar
                 playerBackpack.ReceivePackage(packageToDeliver);
             }
+            else
+            {
+                // Se não tiver, simplesmente destrói o objeto do pacote
+                if (packageToDeliver != null)
+                {
+                    Destroy(packageToDeliver);
+                }
+            }
 
-            // SFX: Toca som de coleta de caixa
             if (AudioManager.Instance != null)
-                AudioManager.Instance.PlayCollectBoxSFX();
+                AudioManager.Instance.PlaySFX("DeliveryCollect");
+
             deliverGoal = mailboxes[boxNumber].target;
             mailboxDistance = Vector3.Distance(mailboxes[boxNumber].mailbox.transform.position, mailboxes[mailboxes[boxNumber].target].mailbox.transform.position);
             currentDeliveryTime = (int)mailboxDistance / DistanceDivisionValue;
@@ -249,7 +255,6 @@ public class DeliveryController : MonoBehaviour
 
             for (int i = 0; i < mailboxes.Count; i++)
             {
-                // Destroi os outros pacotes que não foram coletados
                 if (i != boxNumber && mailboxes[i].spawnedPackage != null)
                 {
                     Destroy(mailboxes[i].spawnedPackage);
@@ -284,22 +289,24 @@ public class DeliveryController : MonoBehaviour
         if (scoring)
         {
             Debug.Log($"Ended Delivery: {boxNumber}");
-            // SFX: Toca som de entrega bem-sucedida
             if (AudioManager.Instance != null)
-                AudioManager.Instance.PlayDeliverySuccessSFX();
+                AudioManager.Instance.PlaySFX("DeliverySuccess");
 
             DeliverPackage(mailboxes[boxNumber].mailbox.transform);
             int deliveryScore = (int)mailboxDistance * scoreDistanceMultiplier + baseDeliveryScoreValue;
             scoreController.ChangeScore(deliveryScore);
             Debug.Log($"Distance: {(int)mailboxDistance} | Score: {deliveryScore}");
         }
-        else ThrowAwayPackage();
+        else
+        {
+            ThrowAwayPackage();
+        }
 
         CreateDelivery(boxNumber);
         if (boxNumber >= 0)
         {
             Transform goalMarker = mailboxes[boxNumber].mailbox.transform.Find("Markers/TargetMarker");
-            goalMarker.gameObject.SetActive(false);
+            if (goalMarker != null) goalMarker.gameObject.SetActive(false);
         }
         deliveryTime.text = null;
         minimapTargetIndicator.target = null;
@@ -311,10 +318,9 @@ public class DeliveryController : MonoBehaviour
     {
         isFailed = true;
 
-        // SFX: Toca som de entrega falhada
         if (AudioManager.Instance != null)
         {
-            AudioManager.Instance.PlayDeliveryFailedSFX();
+            AudioManager.Instance.PlaySFX("CarBreak");
         }
 
         if (!playerCollision.mailboxRange)
@@ -355,10 +361,8 @@ public class DeliveryController : MonoBehaviour
         int randomIndex = Random.Range(0, packagePrefabs.Count);
         GameObject randomPackagePrefab = packagePrefabs[randomIndex];
 
-        // Calcula a posição de spawn com um offset vertical de 1 unidade a partir da posição da mailbox.
         Vector3 spawnPosition = mailbox.mailbox.transform.position + new Vector3(0, 1.3f, 0);
 
-        // Instancia o pacote na posição calculada, usando a rotação da própria mailbox.
         GameObject package = Instantiate(randomPackagePrefab, spawnPosition, mailbox.mailbox.transform.rotation);
         mailbox.spawnedPackage = package;
         mailbox.packageInitialPosition = package.transform.position;
@@ -370,11 +374,9 @@ public class DeliveryController : MonoBehaviour
         {
             if (mailbox.spawnedPackage != null)
             {
-                // Animação de Flutuação (Bobbing)
                 float newY = mailbox.packageInitialPosition.y + Mathf.Sin(Time.time * bobbingSpeed) * bobbingHeight;
                 mailbox.spawnedPackage.transform.position = new Vector3(mailbox.spawnedPackage.transform.position.x, newY, mailbox.spawnedPackage.transform.position.z);
 
-                // Animação de Rotação
                 mailbox.spawnedPackage.transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
             }
         }
@@ -382,12 +384,20 @@ public class DeliveryController : MonoBehaviour
 
     private void DeliverPackage(Transform mailbox)
     {
-        playerBackpack.DeliverPackage(mailbox);
+        // Só tenta entregar se o jogador tiver uma mochila
+        if (playerBackpack != null)
+        {
+            playerBackpack.DeliverPackage(mailbox);
+        }
     }
 
     private void ThrowAwayPackage()
     {
-        playerBackpack.DeliverPackage(null);
+        // Só tenta jogar fora se o jogador tiver uma mochila
+        if (playerBackpack != null)
+        {
+            playerBackpack.DeliverPackage(null);
+        }
     }
 
     public void EndAllDeliveries()

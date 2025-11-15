@@ -1,120 +1,105 @@
-using System.Collections;
 using UnityEngine;
 
 public class PlayerBackpack : MonoBehaviour
 {
-    public Animator animator;
+    [Header("Configuração dos Slots")]
+    [Tooltip("O slot na mão esquerda do personagem. Deixe vazio se este personagem não segura pacotes.")]
     public Transform packageSlotLeft;
+    [Tooltip("O slot na mão direita do personagem. Deixe vazio se este personagem não segura pacotes.")]
     public Transform packageSlotRight;
-    private Transform packageSlot;
-    private GameObject currentPackage;
+
+    [Header("Animação do Pacote")]
     public float packageSpeed = 30f;
-    public bool isMovingToSlot = false;
-    public bool isMovingToMailbox = false;
-    private Transform target;
     public float closeDistance = 0.1f;
-    GameObject discardTarget;
 
-    private void Start()
+    // Estado interno
+    private GameObject currentPackage;
+    private Transform activePackageSlot;
+    private Transform deliveryTarget;
+    private bool isMovingToSlot = false;
+    private bool isMovingToMailbox = false;
+
+    void Update()
     {
-        animator = GetComponent<Animator>();
-        packageSlotLeft = FindDeepChild(transform, "PackageSlot.L");
-        packageSlotRight = FindDeepChild(transform, "PackageSlot.R");
-        discardTarget = new GameObject("Discard");
+        if (isMovingToSlot && currentPackage != null && activePackageSlot != null)
+        {
+            MovePackage(activePackageSlot.position, () => {
+                currentPackage.transform.SetParent(activePackageSlot, true);
+                isMovingToSlot = false;
+            });
+        }
+        else if (isMovingToMailbox && currentPackage != null && deliveryTarget != null)
+        {
+            MovePackage(deliveryTarget.position, () => {
+                Destroy(currentPackage);
+                currentPackage = null;
+                isMovingToMailbox = false;
+            });
+        }
     }
 
-    public void Update()
+    private void MovePackage(Vector3 targetPosition, System.Action onArrived)
     {
-        if (isMovingToSlot)
+        if (currentPackage == null) return;
+
+        currentPackage.transform.position = Vector3.Lerp(currentPackage.transform.position, targetPosition, packageSpeed * Time.deltaTime);
+
+        if (Vector3.Distance(currentPackage.transform.position, targetPosition) < closeDistance)
         {
-            MovePackageToSlot(currentPackage);
-        }
-        if (isMovingToMailbox)
-        {
-            MovePackageToMailbox(currentPackage, target);
+            currentPackage.transform.position = targetPosition;
+            onArrived?.Invoke();
         }
     }
 
+    /// <summary>
+    /// Chamado pelo DeliveryController quando um pacote é coletado.
+    /// </summary>
     public void ReceivePackage(GameObject package)
     {
+        if (package == null) return;
+
+        // Determina qual slot usar (ou se algum existe)
+        activePackageSlot = packageSlotLeft != null ? packageSlotLeft : packageSlotRight;
+
+        // --- LÓGICA PRINCIPAL DA CORREÇÃO ---
+        // Se nenhum slot de pacote foi configurado para este personagem...
+        if (activePackageSlot == null)
+        {
+            // ...simplesmente destrói o pacote visual imediatamente.
+            Destroy(package);
+            return;
+        }
+
+        // Se um slot existe, inicia a animação para mover o pacote até ele.
         currentPackage = package;
+        currentPackage.transform.SetParent(null); // Garante que o pacote não é filho de nada
         isMovingToSlot = true;
+        isMovingToMailbox = false;
     }
 
+    /// <summary>
+    /// Chamado pelo DeliveryController para iniciar a entrega ou descarte do pacote.
+    /// </summary>
     public void DeliverPackage(Transform targetObject)
     {
+        // Se targetObject for null, significa que o tempo acabou e o pacote deve ser descartado.
+        if (targetObject == null)
+        {
+            if (currentPackage != null)
+            {
+                Destroy(currentPackage);
+                currentPackage = null;
+            }
+            return;
+        }
+
+        // Se há um pacote e um alvo, inicia a animação de entrega.
         if (currentPackage != null)
         {
-            if (!targetObject)
-            {
-                discardTarget.transform.parent = null;
-                discardTarget.transform.position = transform.position + new Vector3(0, 15, 0);
-                discardTarget.transform.rotation = transform.rotation;
-                target = discardTarget.transform;
-            }
-            else target = targetObject;
-
+            deliveryTarget = targetObject;
             currentPackage.transform.SetParent(null);
-
             isMovingToMailbox = true;
-        }
-    }
-
-    private void MovePackageToSlot(GameObject package)
-    {
-        if (Vector3.Distance(package.transform.position, packageSlotLeft.transform.position) <= Vector3.Distance(package.transform.position, packageSlotRight.transform.position))
-            packageSlot = packageSlotLeft;
-        else packageSlot = packageSlotRight;
-
-            float step = packageSpeed * Time.deltaTime;
-        float distance = Vector3.Distance(package.transform.position, packageSlot.position);
-
-        if (distance > closeDistance)
-        {
-            package.transform.position = Vector3.MoveTowards(package.transform.position, packageSlot.position, step);
-
-            package.transform.rotation = Quaternion.Slerp(package.transform.rotation, packageSlot.rotation, Time.deltaTime * 5f);
-        }
-        else
-        {
-            Debug.Log("Encostou no slot");
-            package.transform.SetParent(packageSlot);
-            package.transform.localPosition = Vector3.zero;
-            package.transform.localRotation = Quaternion.identity;
             isMovingToSlot = false;
-        }    
-    }
-
-    private void MovePackageToMailbox(GameObject package, Transform target)
-    {
-        float step = packageSpeed * Time.deltaTime;
-        float distance = Vector3.Distance(package.transform.position, target.position);
-
-        if (distance > closeDistance)
-        {
-            package.transform.position = Vector3.MoveTowards(package.transform.position, target.position, step);
-
-            package.transform.rotation = Quaternion.Slerp(package.transform.rotation, target.rotation, Time.deltaTime * 5f);
         }
-        else
-        {
-            isMovingToMailbox = false;
-            Destroy(package);
-            currentPackage = null;
-        }
-    }
-
-    Transform FindDeepChild(Transform parent, string name)
-    {
-        foreach (Transform child in parent)
-        {
-            if (child.name == name)
-                return child;
-
-            Transform result = FindDeepChild(child, name);
-            if (result != null)
-                return result;
-        }
-        return null;
     }
 }

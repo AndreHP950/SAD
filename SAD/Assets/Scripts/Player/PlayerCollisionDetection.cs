@@ -74,6 +74,15 @@ public class PlayerCollisionDetection : MonoBehaviour
                     }
                 }
                 break;
+            case "Water":
+                //TODO: Respawn player
+                // SFX: Toca som de agua
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySFX("WaterSplash");
+                }
+                break;
+
             case "AreaCollectable":
                 AreaCollectables data = areaCollectablesList.Find(item => item.areaCollectable == other.gameObject);
 
@@ -82,7 +91,11 @@ public class PlayerCollisionDetection : MonoBehaviour
                     Debug.Log("Collectable not found in list.");
                     return;
                 }
-
+                // SFX: Toca som de coletável
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySFX("Collectable");
+                }
                 if (data.area == (int)deliveryController.currentArea)
                 {
                     currentAreaCollected++;

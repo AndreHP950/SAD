@@ -16,6 +16,6 @@ MonoBehaviour:
   characterPrefab: {fileID: 925524478360155604, guid: 3ce706feec08a074b81d3113b1d4081a, type: 3}
   characterIcon: {fileID: 0}
   animalType: 1
-  spawnPosition: {x: -154, y: 0.15, z: 78}
+  spawnPosition: {x: 102, y: 0.15, z: 55}
   spawnRotation: {x: 0, y: -1, z: 0, w: -0.00000004371139}
   startArea: 2

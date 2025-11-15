@@ -10295,11 +10295,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5175632743032749790, guid: 497638e78cdab1942a4747b6e5b64b30, type: 3}
       propertyPath: HorizontalAxis.Value
-      value: 173.9867
+      value: -60.87447
       objectReference: {fileID: 0}
     - target: {fileID: 5175632743032749790, guid: 497638e78cdab1942a4747b6e5b64b30, type: 3}
       propertyPath: HorizontalAxis.Center
-      value: 173.9867
+      value: -60.87447
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -32242,9 +32242,10 @@ GameObject:
   - component: {fileID: 1585627522}
   - component: {fileID: 1585627525}
   - component: {fileID: 1585627524}
-  m_Layer: 0
+  - component: {fileID: 1585627526}
+  m_Layer: 4
   m_Name: Water
-  m_TagString: Untagged
+  m_TagString: Water
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32317,6 +32318,27 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1585627521}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!65 &1585627526
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1585627521}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10.000001, y: 0.16, z: 10.000001}
+  m_Center: {x: 0, y: -0.08, z: 0}
 --- !u!1001 &1591526460
 PrefabInstance:
   m_ObjectHideFlags: 0
