@@ -135,6 +135,11 @@ MonoBehaviour:
   visualRoot: {fileID: 0}
   hardBrakeDamping: 2
   playerLayerName: Player
+  depenetrationMask:
+    serializedVersion: 2
+    m_Bits: 0
+  depenetrationPadding: 0.01
+  depenProbeRadiusScale: 1.1
 --- !u!65 &1231706631146521452
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -13,6 +13,8 @@ public class Mailbox
     public GameObject mailbox;
     public int target;
     public bool available;
+    public GameObject spawnedPackage; // Referência para o pacote instanciado
+    public Vector3 packageInitialPosition; // Posição inicial para o cálculo da animação
 }
 
 public class DeliveryController : MonoBehaviour
@@ -22,7 +24,7 @@ public class DeliveryController : MonoBehaviour
     public bool startChangingArea = false;
     public int deliverGoal = 0;
     GameObject player;
-    
+
     PlayerCollisionDetection playerCollision;
     MatchTimeController matchTimeController;
 
@@ -42,9 +44,17 @@ public class DeliveryController : MonoBehaviour
     ScoreController scoreController;
 
     [Header("Package Values")]
-    public GameObject packagePrefab;
-    public Transform spawnPoint;
+    [Tooltip("Lista de prefabs de pacotes para instanciar aleatoriamente.")]
+    public List<GameObject> packagePrefabs = new List<GameObject>();
     PlayerBackpack playerBackpack;
+
+    [Header("Package Animation")]
+    [Tooltip("Velocidade da flutuação vertical.")]
+    [SerializeField] private float bobbingSpeed = 1.5f;
+    [Tooltip("Altura máxima da flutuação vertical.")]
+    [SerializeField] private float bobbingHeight = 0.25f;
+    [Tooltip("Velocidade da rotação no eixo Y.")]
+    [SerializeField] private float rotationSpeed = 50f;
 
     [Header("Mailboxes Values")]
     public List<Mailbox> mailboxesArea1 = new List<Mailbox>();
@@ -98,6 +108,11 @@ public class DeliveryController : MonoBehaviour
         else if (startChangingArea)
         {
             UnlockNextArea();
+        }
+        else
+        {
+            // Anima os pacotes que estão esperando para serem coletados
+            AnimateCollectablePackages();
         }
 
         if (Input.GetKeyDown(KeyCode.L))
@@ -158,7 +173,16 @@ public class DeliveryController : MonoBehaviour
 
     public void CreateDelivery(int boxNumber)
     {
-        for (int i = 0;  i < mailboxes.Count; i++)
+        // Limpa pacotes antigos antes de criar novos
+        foreach (var mb in mailboxes)
+        {
+            if (mb.spawnedPackage != null)
+            {
+                Destroy(mb.spawnedPackage);
+            }
+        }
+
+        for (int i = 0; i < mailboxes.Count; i++)
         {
             if (i != boxNumber)
             {
@@ -169,6 +193,9 @@ public class DeliveryController : MonoBehaviour
                     mailboxes[i].target = Random.Range(0, mailboxes.Count);
                 }
                 while (i == mailboxes[i].target);
+
+                // Instancia o pacote para coleta
+                SpawnPackageForCollection(mailboxes[i]);
 
                 mailboxDistance = Vector3.Distance(mailboxes[i].mailbox.transform.position, mailboxes[mailboxes[i].target].mailbox.transform.position);
                 Transform marker = mailboxes[i].mailbox.transform.Find("Markers/TargetMarker");
@@ -191,7 +218,7 @@ public class DeliveryController : MonoBehaviour
                 }
             }
             else mailboxes[i].available = false;
-        }      
+        }
     }
 
     public void StartDelivery(int boxNumber)
@@ -199,6 +226,18 @@ public class DeliveryController : MonoBehaviour
         if (mailboxes[boxNumber].available)
         {
             Debug.Log($"Started Delivery: {boxNumber}");
+
+            // Pega a referência do pacote que foi coletado
+            GameObject packageToDeliver = mailboxes[boxNumber].spawnedPackage;
+
+            // Limpa a referência para que a animação pare
+            mailboxes[boxNumber].spawnedPackage = null;
+
+            // Entrega o pacote (agora sem animação) para o script do jogador
+            if (packageToDeliver != null)
+            {
+                playerBackpack.ReceivePackage(packageToDeliver);
+            }
 
             // SFX: Toca som de coleta de caixa
             if (AudioManager.Instance != null)
@@ -210,6 +249,13 @@ public class DeliveryController : MonoBehaviour
 
             for (int i = 0; i < mailboxes.Count; i++)
             {
+                // Destroi os outros pacotes que não foram coletados
+                if (i != boxNumber && mailboxes[i].spawnedPackage != null)
+                {
+                    Destroy(mailboxes[i].spawnedPackage);
+                    mailboxes[i].spawnedPackage = null;
+                }
+
                 Transform markers = mailboxes[i].mailbox.transform.Find("Markers");
                 if (markers != null)
                 {
@@ -226,10 +272,8 @@ public class DeliveryController : MonoBehaviour
                     Transform goalMarker = mailboxes[i].mailbox.transform.Find("Markers/TargetMarker");
                     goalMarker.gameObject.SetActive(true);
                 }
-
-
             }
-            GetPackage(mailboxes[boxNumber].mailbox.transform);
+
             minimapTargetIndicator.target = mailboxes[mailboxes[boxNumber].target].mailbox.transform;
             isDelivering = true;
         }
@@ -252,7 +296,7 @@ public class DeliveryController : MonoBehaviour
         else ThrowAwayPackage();
 
         CreateDelivery(boxNumber);
-        if(boxNumber >= 0)
+        if (boxNumber >= 0)
         {
             Transform goalMarker = mailboxes[boxNumber].mailbox.transform.Find("Markers/TargetMarker");
             goalMarker.gameObject.SetActive(false);
@@ -260,7 +304,7 @@ public class DeliveryController : MonoBehaviour
         deliveryTime.text = null;
         minimapTargetIndicator.target = null;
         isDelivering = false;
-        isFailed = false; 
+        isFailed = false;
     }
 
     public void FailedDelivery()
@@ -268,8 +312,8 @@ public class DeliveryController : MonoBehaviour
         isFailed = true;
 
         // SFX: Toca som de entrega falhada
-        if (AudioManager.Instance != null) 
-        { 
+        if (AudioManager.Instance != null)
+        {
             AudioManager.Instance.PlayDeliveryFailedSFX();
         }
 
@@ -292,14 +336,48 @@ public class DeliveryController : MonoBehaviour
             mailboxes[i].mailbox.transform.Find("Markers/DistanceClose").gameObject.SetActive(false);
             mailboxes[i].mailbox.transform.Find("Markers/DistanceMedium").gameObject.SetActive(false);
             mailboxes[i].mailbox.transform.Find("Markers/DistanceFar").gameObject.SetActive(false);
+
+            if (mailboxes[i].spawnedPackage != null)
+            {
+                Destroy(mailboxes[i].spawnedPackage);
+            }
         }
     }
 
-    private void GetPackage(Transform mailbox)
+    private void SpawnPackageForCollection(Mailbox mailbox)
     {
-        GameObject package = Instantiate(packagePrefab, mailbox.position, mailbox.rotation);
+        if (packagePrefabs == null || packagePrefabs.Count == 0)
+        {
+            Debug.LogError("A lista 'packagePrefabs' está vazia! Adicione os prefabs de pacote no Inspector.");
+            return;
+        }
 
-        playerBackpack.ReceivePackage(package);
+        int randomIndex = Random.Range(0, packagePrefabs.Count);
+        GameObject randomPackagePrefab = packagePrefabs[randomIndex];
+
+        // Calcula a posição de spawn com um offset vertical de 1 unidade a partir da posição da mailbox.
+        Vector3 spawnPosition = mailbox.mailbox.transform.position + new Vector3(0, 1.3f, 0);
+
+        // Instancia o pacote na posição calculada, usando a rotação da própria mailbox.
+        GameObject package = Instantiate(randomPackagePrefab, spawnPosition, mailbox.mailbox.transform.rotation);
+        mailbox.spawnedPackage = package;
+        mailbox.packageInitialPosition = package.transform.position;
+    }
+
+    private void AnimateCollectablePackages()
+    {
+        foreach (var mailbox in mailboxes)
+        {
+            if (mailbox.spawnedPackage != null)
+            {
+                // Animação de Flutuação (Bobbing)
+                float newY = mailbox.packageInitialPosition.y + Mathf.Sin(Time.time * bobbingSpeed) * bobbingHeight;
+                mailbox.spawnedPackage.transform.position = new Vector3(mailbox.spawnedPackage.transform.position.x, newY, mailbox.spawnedPackage.transform.position.z);
+
+                // Animação de Rotação
+                mailbox.spawnedPackage.transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
+            }
+        }
     }
 
     private void DeliverPackage(Transform mailbox)
