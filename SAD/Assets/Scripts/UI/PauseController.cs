@@ -174,7 +174,7 @@ public class PauseController : MonoBehaviour
 
             gameTime.gameObject.SetActive(false);
             score.gameObject.SetActive(false);
-            mobileUI.gameObject.SetActive(false);
+            if (GameManager.instance.isMobile) mobileUI.gameObject.SetActive(false);
         }  
     }
 
@@ -193,7 +193,7 @@ public class PauseController : MonoBehaviour
 
             gameTime.gameObject.SetActive(true);
             score.gameObject.SetActive(true);
-            mobileUI.gameObject.SetActive(true);
+            if (GameManager.instance.isMobile)mobileUI.gameObject.SetActive(true);
         }
     }
 

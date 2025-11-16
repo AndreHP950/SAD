@@ -21,6 +21,7 @@ public class PlayerInputManager : MonoBehaviour
     private Vector2 lastTouchPos;
 
     [SerializeField] private GraphicRaycaster raycaster;
+    private PauseController pauseController;
     private PointerEventData pointerEventData;
 
     private bool jumpPressed;
@@ -34,12 +35,14 @@ public class PlayerInputManager : MonoBehaviour
         if (SceneManager.GetActiveScene().name == "Game") orbital = GameObject.Find("PlayerCamera").GetComponent<CinemachineOrbitalFollow>();
 
         raycaster = UIManager.instance.GetComponent<GraphicRaycaster>();
+        pauseController = UIManager.instance.GetComponent<PauseController>();
     }
 
     private HashSet<int> blockedFingerIds = new HashSet<int>();
 
     private void Update()
     {
+        if (pauseController.IsPaused) return;
         if (GameManager.instance.isMobile)
         {
             HandleTouchCamera();

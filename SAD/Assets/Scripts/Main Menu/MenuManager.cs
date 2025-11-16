@@ -10,7 +10,7 @@ public class MenuManager : MonoBehaviour
     [SerializeField] CinemachineCamera[] cameraList;
     [SerializeField] Canvas[] canvas;
     public int menuLocation = 0;
-    GameManager gameManager;
+    private int characterPosition;
 
     public Animator mainMenuMaskAnimator;
 
@@ -24,9 +24,9 @@ public class MenuManager : MonoBehaviour
 
     private void Start()
     {
-        gameManager = GameObject.FindWithTag("GameManager").GetComponent<GameManager>();
+        characterPosition = 7;
 
-        if (gameManager.returningFromGame) MenuGoTo(2);
+        if (GameManager.instance.returningFromGame) MenuGoTo(2);
 
         masterSlider.onValueChanged.RemoveAllListeners();
         masterSlider.onValueChanged.AddListener(AudioManager.Instance.SetVolumeMaster);
@@ -62,6 +62,15 @@ public class MenuManager : MonoBehaviour
                 break;
             case 6:
                 ExitGame();
+                break;
+            case 7:
+                CharacterSelector();
+                break;
+            case 8:
+                CharacterSelector();
+                break;
+            case 9:
+                CharacterSelector();
                 break;
             default:
                 break;
@@ -129,6 +138,24 @@ public class MenuManager : MonoBehaviour
         }
     }
 
+    void CharacterSelector()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            MenuGoTo(1);
+        }
+
+        if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            CharacterSelectorMenuMovement("Previous");
+        }
+
+        if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            CharacterSelectorMenuMovement("Next");
+        }
+    }
+
     #endregion
 
     //IEnumerator LogoToMenuCutscene()
@@ -150,6 +177,22 @@ public class MenuManager : MonoBehaviour
 
         if (location == 1) mainMenuMaskAnimator.SetTrigger("TurnOn");
         if (location == 4) GetSliderValues();
+    }
+
+    public void CharacterSelectorMenuMovement(string nextCharacter)
+    {
+        if (nextCharacter == "Next")
+        {
+            characterPosition++;
+        }
+        if (nextCharacter == "Previous")
+        {
+            characterPosition--;
+        }
+        if (characterPosition < 7) characterPosition = 8; //Mudar para 9 colocando o terceiro personagem
+        else if (characterPosition > 8) characterPosition = 7;
+
+        MenuGoTo(characterPosition);
     }
 
     private void GetSliderValues()
@@ -189,5 +232,24 @@ public class MenuManager : MonoBehaviour
                 }
             }
         }        
+    }
+
+    public void StartGame()
+    {
+        DisableButtons();
+
+        switch (characterPosition)
+        {
+            case 7:
+                GameManager.instance.selectedCharacter = GameManager.AvailableCharacters.Felicia;
+                break;
+            case 8:
+                GameManager.instance.selectedCharacter = GameManager.AvailableCharacters.Doug;
+                break;
+            case 9: 
+                GameManager.instance.selectedCharacter = GameManager.AvailableCharacters.Akita;
+                break;
+        }
+        GameManager.instance.StartGame();
     }
 }

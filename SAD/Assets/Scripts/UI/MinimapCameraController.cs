@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class MinimapCameraController : MonoBehaviour
@@ -13,9 +14,19 @@ public class MinimapCameraController : MonoBehaviour
         player = GameObject.FindWithTag("Player");
         playerCamera = Camera.main.gameObject;
 
-        targetIndicator = GameObject.FindWithTag("PhoneMap").GetComponent<MinimapTargetIndicator>();
-        targetIndicator.minimapCamera = this.GetComponent<Camera>();
+        targetIndicator = UIManager.instance.GetComponentInChildren<MinimapTargetIndicator>(true);
+        targetIndicator.minimapCamera = GetComponent<Camera>();
+
+        //StartCoroutine(GetSingletonNextFrame());
     }
+
+    //IEnumerator GetSingletonNextFrame()
+    //{
+    //    yield return new WaitUntil(() => GameObject.FindWithTag("PhoneMap") != null);
+
+        
+    //}
+
     void LateUpdate()
     {
         if (player == null) return;

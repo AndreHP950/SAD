@@ -25,7 +25,6 @@ public class UIManager : MonoBehaviour
 
     private void Awake()
     {
-        GameObject[] objs = GameObject.FindGameObjectsWithTag("UIManager");
         if (instance == null)
         {
             instance = this;
@@ -34,6 +33,7 @@ public class UIManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
         }
 
         UIAnimator = GetComponent<Animator>();
@@ -58,9 +58,6 @@ public class UIManager : MonoBehaviour
 
         effectsSlider.onValueChanged.RemoveAllListeners();
         effectsSlider.onValueChanged.AddListener(AudioManager.Instance.SetVolumeEffects);
-
-        if (GameManager.instance.isMobile) mobileHUD.gameObject.SetActive(true);
-        else mobileHUD.gameObject.SetActive(false);
     }
 
     public void TimesUp(bool activate)

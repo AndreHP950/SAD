@@ -14,11 +14,6 @@ public class MinimapTargetIndicator : MonoBehaviour
     public float mapViewPadding = 60f;
     [Range(0f, 1f)] public float roundness = 0.6f;
 
-    private void Start()
-    {
-        minimapCamera = GameObject.Find("MiniMapCamera").GetComponent<Camera>();
-    }
-
     private void Update()
     {
         if (minimapCamera == null || target == null)

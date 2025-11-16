@@ -14,6 +14,7 @@ public class AreaCollectables
 public class PlayerCollisionDetection : MonoBehaviour
 {
     [SerializeField] DeliveryController deliveryController;
+    PlayerRespawn playerRespawn;
     public int boxNumber;
     public bool mailboxRange = false;
     public List<AreaCollectables> areaCollectablesList = new List<AreaCollectables>();
@@ -25,6 +26,7 @@ public class PlayerCollisionDetection : MonoBehaviour
     private void Start()
     {
         deliveryController = GameObject.Find("Mailboxes").GetComponent<DeliveryController>();
+        playerRespawn = GetComponent<PlayerRespawn>();
 
         GetAvailableAreaCollectables();
     }
@@ -81,6 +83,7 @@ public class PlayerCollisionDetection : MonoBehaviour
                 {
                     AudioManager.Instance.PlaySFX("WaterSplash");
                 }
+                playerRespawn.RespawnPlayer();
                 break;
 
             case "AreaCollectable":

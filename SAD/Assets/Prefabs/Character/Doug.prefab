@@ -151,6 +151,7 @@ GameObject:
   - component: {fileID: 3372086651114220944}
   - component: {fileID: 5812506224447801252}
   - component: {fileID: 7194459299446906407}
+  - component: {fileID: -3015149456197358700}
   m_Layer: 3
   m_Name: Doug
   m_TagString: Player
@@ -220,8 +221,8 @@ MonoBehaviour:
   rotation: 10
   minigameSpeed: 15
   minigameRotation: 10
-  gravity: -9.81
-  jumpHeight: 2
+  gravity: -20
+  jumpHeight: 1
   slideSpeed: 2
   slopeRayLength: 1.5
   pushableLayers:
@@ -237,6 +238,7 @@ MonoBehaviour:
   cameraTransform: {fileID: 0}
   speedText: {fileID: 3357903691229661032}
   fpvCameraPivot: {fileID: 0}
+  isMoving: 1
 --- !u!114 &4224580151866358703
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -265,12 +267,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 629f9dd28a041cd449799e66b7578ad8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 0}
   packageSlotLeft: {fileID: 0}
   packageSlotRight: {fileID: 0}
   packageSpeed: 30
-  isMovingToSlot: 0
-  isMovingToMailbox: 0
   closeDistance: 1
 --- !u!82 &5812506224447801252
 AudioSource:
@@ -387,6 +386,18 @@ MonoBehaviour:
   sensitivityPC: 1.25
   orbital: {fileID: 0}
   raycaster: {fileID: 0}
+--- !u!114 &-3015149456197358700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 925524478360155604}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95a17f34dd8f2a6498f6b4b4f639ec18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2166370461734095390
 GameObject:
   m_ObjectHideFlags: 0

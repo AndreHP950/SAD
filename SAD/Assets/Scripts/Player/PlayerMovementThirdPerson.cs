@@ -56,6 +56,7 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     // Componentes e Estado
     CharacterController characterController;
     PlayerInputManager playerInputManager;
+    public bool isMoving = true;
     private Vector3 velocity;
     private Vector3 moveVelocity;
     private Vector3 lastPos;
@@ -109,56 +110,60 @@ public class PlayerMovementThirdPerson : MonoBehaviour
 
     private void Movement()
     {
-        float horizontal = playerInputManager.GetHorizontal();
-        float vertical = playerInputManager.GetVertical();
-
-        Vector3 camForward = cameraTransform.forward;
-        Vector3 camRight = cameraTransform.right;
-
-        camForward.y = 0;
-        camRight.y = 0;
-        camForward.Normalize();
-        camRight.Normalize();
-
-        Vector3 inputDir = (camForward * vertical + camRight * horizontal).normalized;
-
-        // Usa a velocidade correta para o modo atual e aplica o power-up
-        float baseSpeed = currentMode == MovementMode.Minigame ? minigameSpeed : speed;
-        float currentMaxSpeed = baseSpeed * speedBoostMultiplier;
-        Vector3 targetVelocity = inputDir * currentMaxSpeed;
-
-        float lerpSpeed = (inputDir.magnitude > 0.1f) ? acceleration : deceleration;
-        moveVelocity = Vector3.Lerp(moveVelocity, targetVelocity, lerpSpeed * Time.deltaTime);
-
-        if (playerInputManager.GetJump() && characterController.isGrounded)
+        if (isMoving)
         {
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            float horizontal = playerInputManager.GetHorizontal();
+            float vertical = playerInputManager.GetVertical();
+
+            Vector3 camForward = cameraTransform.forward;
+            Vector3 camRight = cameraTransform.right;
+
+            camForward.y = 0;
+            camRight.y = 0;
+            camForward.Normalize();
+            camRight.Normalize();
+
+            Vector3 inputDir = (camForward * vertical + camRight * horizontal).normalized;
+
+            // Usa a velocidade correta para o modo atual e aplica o power-up
+            float baseSpeed = currentMode == MovementMode.Minigame ? minigameSpeed : speed;
+            float currentMaxSpeed = baseSpeed * speedBoostMultiplier;
+            Vector3 targetVelocity = inputDir * currentMaxSpeed;
+
+            float lerpSpeed = (inputDir.magnitude > 0.1f) ? acceleration : deceleration;
+            moveVelocity = Vector3.Lerp(moveVelocity, targetVelocity, lerpSpeed * Time.deltaTime);
+
+            if (playerInputManager.GetJump() && characterController.isGrounded)
+            {
+                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            }
+
+            if (characterController.isGrounded && velocity.y < 0) velocity.y = -2f;
+            velocity.y += gravity * Time.deltaTime;
+
+            Vector3 flatVel = new Vector3(moveVelocity.x, 0f, moveVelocity.z);
+            if (flatVel.magnitude > 0.1f)
+            {
+                // Usa a rotação correta para o modo atual
+                float currentRotation = currentMode == MovementMode.Minigame ? minigameRotation : rotation;
+                Quaternion targetRotation = Quaternion.LookRotation(flatVel);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotation * Time.deltaTime);
+            }
+
+            Vector3 moveDir = transform.forward * flatVel.magnitude;
+
+            Vector3 slideDir;
+            isSliding = CheckSlope(out slideDir);
+
+            if (isSliding)
+            {
+                moveDir += slideDir * slideSpeed;
+            }
+
+            Vector3 finalMove = (moveDir + velocity) * Time.deltaTime;
+            characterController.Move(finalMove);
         }
-
-        if (characterController.isGrounded && velocity.y < 0) velocity.y = -2f;
-        velocity.y += gravity * Time.deltaTime;
-
-        Vector3 flatVel = new Vector3(moveVelocity.x, 0f, moveVelocity.z);
-        if (flatVel.magnitude > 0.1f)
-        {
-            // Usa a rotação correta para o modo atual
-            float currentRotation = currentMode == MovementMode.Minigame ? minigameRotation : rotation;
-            Quaternion targetRotation = Quaternion.LookRotation(flatVel);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotation * Time.deltaTime);
-        }
-
-        Vector3 moveDir = transform.forward * flatVel.magnitude;
-
-        Vector3 slideDir;
-        isSliding = CheckSlope(out slideDir);
-
-        if (isSliding)
-        {
-            moveDir += slideDir * slideSpeed;
-        }
-
-        Vector3 finalMove = (moveDir + velocity) * Time.deltaTime;
-        characterController.Move(finalMove);
+        
     }
 
     private void UpdateVelocity()

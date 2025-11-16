@@ -59,7 +59,14 @@ public class PlayerBackpack : MonoBehaviour
         if (package == null) return;
 
         // Determina qual slot usar (ou se algum existe)
-        activePackageSlot = packageSlotLeft != null ? packageSlotLeft : packageSlotRight;
+        //activePackageSlot = packageSlotLeft != null ? packageSlotLeft : packageSlotRight;
+        if (packageSlotLeft != null && packageSlotRight != null)
+        {
+            Vector3 dir = package.transform.position - transform.position;
+            float cross = Vector3.Cross(transform.forward, dir).y;
+            if (cross > 0) activePackageSlot = packageSlotRight;
+            else activePackageSlot = packageSlotLeft;
+        }
 
         // --- LÓGICA PRINCIPAL DA CORREÇÃO ---
         // Se nenhum slot de pacote foi configurado para este personagem...

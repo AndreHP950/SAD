@@ -15,6 +15,7 @@ TagManager:
   - PhoneMap
   - AreaCollectable
   - Water
+  - SafePosition
   layers:
   - Default
   - TransparentFX

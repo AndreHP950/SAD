@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
         }
     }
 
@@ -90,6 +91,7 @@ public class GameManager : MonoBehaviour
 
         isLoadingScene = false;
 
+        UIManager.instance.mobileHUD.gameObject.SetActive(GameManager.instance.isMobile);
         UIManager.instance.gameUI.gameObject.SetActive(true);
 
         AudioManager.Instance.sfxSource = GameObject.FindWithTag("Player").GetComponent<AudioSource>();
@@ -122,5 +124,10 @@ public class GameManager : MonoBehaviour
         finalScoreText.text = matchScore.ToString();
 
         UIManager.instance.UIAnimator.SetTrigger("Open");
+    }
+
+    public void ChooseCharacter(int character)
+    {
+        selectedCharacter = (AvailableCharacters)character;
     }
 }
