@@ -9,7 +9,7 @@ using UnityEngine.SocialPlatforms.Impl;
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
-    int matchScore;
+    public int matchScore;
     
     [Header("Characters")]
     public AvailableCharacters selectedCharacter;
@@ -122,6 +122,9 @@ public class GameManager : MonoBehaviour
 
         TextMeshProUGUI finalScoreText = GameObject.Find("Menus/Results/Score").GetComponent<TextMeshProUGUI>();
         finalScoreText.text = matchScore.ToString();
+
+        MenuRecordsManager menuRecords = GameObject.Find("SAD Central Block/RecordsPlates").GetComponent<MenuRecordsManager>();
+        menuRecords.UpdateRanking(selectedCharacter, matchScore);
 
         UIManager.instance.UIAnimator.SetTrigger("Open");
     }

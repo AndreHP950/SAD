@@ -10966,6 +10966,8 @@ MonoBehaviour:
   gameUI: {fileID: 0}
   transition: {fileID: 0}
   mobileHUD: {fileID: 0}
+  joystick: {fileID: 0}
+  jumpButton: {fileID: 0}
   UIAnimator: {fileID: 0}
   masterSlider: {fileID: 504500853765660438}
   musicSlider: {fileID: 5246499443342732593}
