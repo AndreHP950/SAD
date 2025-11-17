@@ -24,6 +24,8 @@ public class MinigameController : MonoBehaviour
 
     [Header("Catch / Reward")]
     public float catchDistance = 1.2f;
+    [Tooltip("Cooldown em segundos no início do minigame antes de poder capturar.")]
+    public float initialCatchCooldown = 1.0f;
     public float speedBoostMultiplier = 1.3f;
     public float speedBoostDuration = 5f;
 
@@ -45,6 +47,7 @@ public class MinigameController : MonoBehaviour
 
     ChasableAI activeTarget;
     float timer;
+    float catchCooldown; // NOVO: Timer para o cooldown de captura
 
     // player renderers storage
     Renderer[] playerRenderers;
@@ -69,7 +72,10 @@ public class MinigameController : MonoBehaviour
         playerMovement = FindFirstObjectByType<PlayerMovementThirdPerson>();
         if (playerMovement == null) { Debug.LogWarning("PlayerMovement not found."); return; }
 
-        // Ativa o modo de movimento preciso
+        // --- NOVAS FUNCIONALIDADES ---
+        // 1. Para completamente o movimento do jogador
+        playerMovement.StopMomentum();
+        // 2. Ativa o modo de movimento preciso do minigame
         playerMovement.SetMovementMode(PlayerMovementThirdPerson.MovementMode.Minigame);
 
         playerTransform = playerMovement.transform;
@@ -150,8 +156,9 @@ public class MinigameController : MonoBehaviour
             vignetteImage.gameObject.SetActive(true);
         }
 
-        // start timer
+        // start timer e cooldown
         timer = chaseDuration;
+        catchCooldown = initialCatchCooldown; // Inicia o cooldown de captura
         state = MinigameState.Running;
 
         Cursor.visible = false;
@@ -161,6 +168,12 @@ public class MinigameController : MonoBehaviour
     void Update()
     {
         if (state != MinigameState.Running) return;
+
+        // Atualiza o cooldown de captura
+        if (catchCooldown > 0)
+        {
+            catchCooldown -= Time.deltaTime;
+        }
 
         if (vignetteImage != null)
         {
@@ -177,7 +190,8 @@ public class MinigameController : MonoBehaviour
             return;
         }
 
-        if (activeTarget != null && playerMovement != null)
+        // Verifica a captura SÓ SE o cooldown tiver acabado
+        if (catchCooldown <= 0 && activeTarget != null && playerMovement != null)
         {
             float d = activeTarget.DistanceToPoint(playerTransform.position);
             if (d <= catchDistance)

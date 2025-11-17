@@ -10,75 +10,86 @@ public class IntersectionZone : MonoBehaviour
     readonly Queue<TrafficVehicleSpline> queue = new Queue<TrafficVehicleSpline>();
     TrafficVehicleSpline current;
 
+    // NOVO: Método público para verificar se um veículo é o primeiro da fila.
+    public bool IsFirstInQueue(TrafficVehicleSpline vehicle)
+    {
+        if (queue.Count == 0 || vehicle == null)
+            return false;
+
+        // Retorna true se o veículo fornecido for o mesmo que está no início da fila.
+        return queue.Peek() == vehicle;
+    }
+
     void Reset()
     {
-        GetComponent<Collider>().isTrigger = true;
+        var col = GetComponent<Collider>();
+        if (col != null) col.isTrigger = true;
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if (!IsVehicle(other, out var v)) return;
-
-        v.NotifyEnterIntersection(this);
-        if (current == null && queue.Count == 0)
-        {
-            current = v;
-            v.GrantIntersection(this);
-        }
-        else
+        if (IsVehicle(other, out var v))
         {
             if (!queue.Contains(v))
+            {
                 queue.Enqueue(v);
+                v.NotifyEnterIntersection(this);
+            }
+            GrantNext();
         }
     }
 
     void OnTriggerExit(Collider other)
     {
-        if (!IsVehicle(other, out var v)) return;
-
-        v.NotifyExitIntersection(this);
-        if (v == current)
+        if (IsVehicle(other, out var v))
         {
-            current = null;
-            GrantNext();
-        }
-        else
-        {
-            // limpa entradas obsoletas
-            TrimQueue();
+            v.NotifyExitIntersection(this);
+            if (current == v)
+            {
+                current = null;
+                GrantNext();
+            }
         }
     }
 
     void GrantNext()
     {
-        while (queue.Count > 0 && current == null)
+        if (current != null) return;
+
+        TrimQueue();
+        if (queue.Count > 0)
         {
-            var next = queue.Dequeue();
-            if (next != null && next.isActiveAndEnabled)
+            current = queue.Dequeue();
+            if (current != null)
             {
-                current = next;
-                next.GrantIntersection(this);
+                current.GrantIntersection(this);
+            }
+            else
+            {
+                // Se o carro na fila foi destruído, tenta o próximo
+                GrantNext();
             }
         }
     }
 
     void TrimQueue()
     {
-        if (queue.Count == 0) return;
-        var tmp = new Queue<TrafficVehicleSpline>();
-        while (queue.Count > 0)
+        while (queue.Count > 0 && (queue.Peek() == null || !queue.Peek().gameObject.activeInHierarchy))
         {
-            var v = queue.Dequeue();
-            if (v != null) tmp.Enqueue(v);
+            queue.Dequeue();
         }
-        while (tmp.Count > 0) queue.Enqueue(tmp.Dequeue());
     }
 
     bool IsVehicle(Collider other, out TrafficVehicleSpline v)
     {
+        v = null;
+        if ((vehicleMask.value & (1 << other.gameObject.layer)) == 0) return false;
         v = other.GetComponentInParent<TrafficVehicleSpline>();
         return v != null;
     }
 
-    public bool HasPriority(TrafficVehicleSpline v) => v == current;
+    public bool HasPriority(TrafficVehicleSpline v)
+    {
+        return current == v;
+    }
 }

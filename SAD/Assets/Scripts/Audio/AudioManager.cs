@@ -107,14 +107,15 @@ public class AudioManager : MonoBehaviour
         StopAllSounds();
 
         // Assumindo que a cena de menu se chama "MainMenu"
-        if (scene.name == "MainMenu") 
+        if (scene.name == "MainMenu")
         {
             PlayLoopingSound(musicSource, "ThemeSong");
         }
         // Assumindo que a cena de jogo se chama "Game" 
-        else if (scene.name == "Game") 
+        else if (scene.name == "Game")
         {
             PlayLoopingSound(ambienceSource, "TrafficSound");
+            PlayLoopingSound(musicSource, "GameThemeSong");
         }
     }
 

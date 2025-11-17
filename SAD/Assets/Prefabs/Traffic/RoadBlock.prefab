@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7826948754411477176}
   - component: {fileID: 5124297758506037050}
   - component: {fileID: 5464206866723773787}
+  - component: {fileID: 5344064580006608768}
   m_Layer: 7
   m_Name: RoadBlock
   m_TagString: Untagged
@@ -121,9 +122,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9777e7f504e26c84bb9c5964f3f8ad9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boxCenter: {x: 0, y: 1.5, z: 0}
-  boxSize: {x: 0.8, y: 1, z: 0.8}
+  triggerCenter: {x: 0, y: 1, z: 0}
+  triggerSize: {x: 1, y: 1, z: 1}
   scoreAmount: 350
   scoreController: {fileID: 0}
   onlyOnce: 0
   rearmDelay: 5
+--- !u!65 &5344064580006608768
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1670628016219317924}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 1, z: 0}

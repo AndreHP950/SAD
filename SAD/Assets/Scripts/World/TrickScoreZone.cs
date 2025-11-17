@@ -3,9 +3,11 @@ using UnityEngine;
 [DefaultExecutionOrder(0)]
 public class TrickScoreZone : MonoBehaviour
 {
-    [Header("Hitbox (OBB)")]
-    public Vector3 boxCenter = Vector3.zero;
-    public Vector3 boxSize = new Vector3(3f, 2f, 4f);
+    [Header("Zona de Pontuação (Trigger)")]
+    [Tooltip("O centro da zona de trigger, relativo à posição do objeto.")]
+    public Vector3 triggerCenter = Vector3.zero;
+    [Tooltip("O tamanho da zona de trigger.")]
+    public Vector3 triggerSize = new Vector3(3f, 2f, 4f);
 
     [Header("Pontuação")]
     public int scoreAmount = 100;
@@ -19,38 +21,71 @@ public class TrickScoreZone : MonoBehaviour
     public float rearmDelay = 2f;
 
     // Interno
-    Transform player;
-    bool wasInside = false;
-    bool armed = true;
-    float armReadyTime = 0f;
+    private bool armed = true;
+    private float armReadyTime = 0f;
+    private BoxCollider triggerCollider; // Referência para nosso collider de trigger específico
 
     void Awake()
     {
-        var go = GameObject.FindWithTag("Player");
-        if (go != null) player = go.transform;
-
+        SetupTriggerCollider();
         EnsureScoreControllerBound();
+    }
+
+    void OnValidate()
+    {
+        // Isso permite que o gizmo e o collider se atualizem no editor
+        // quando você muda os valores de triggerCenter e triggerSize.
+        SetupTriggerCollider();
+    }
+
+    void SetupTriggerCollider()
+    {
+        BoxCollider[] colliders = GetComponents<BoxCollider>();
+        triggerCollider = null;
+
+        // 1. Tenta encontrar um BoxCollider que já esteja configurado como trigger.
+        foreach (var col in colliders)
+        {
+            if (col.isTrigger)
+            {
+                triggerCollider = col;
+                break;
+            }
+        }
+
+        // 2. Se nenhum for encontrado, adiciona um novo para não mexer no collider físico.
+        if (triggerCollider == null)
+        {
+            triggerCollider = gameObject.AddComponent<BoxCollider>();
+            triggerCollider.isTrigger = true;
+        }
+
+        // 3. Aplica as propriedades do script ao collider de trigger.
+        triggerCollider.center = triggerCenter;
+        triggerCollider.size = triggerSize;
     }
 
     void Update()
     {
-        if (player == null) return;
-
         // Rearme por tempo (usa unscaled para funcionar mesmo em pausa)
-        if (!armed && Time.unscaledTime >= armReadyTime)
+        if (!armed && !onlyOnce && Time.unscaledTime >= armReadyTime)
+        {
             armed = true;
+        }
+    }
 
-        bool inside = IsInsideOBB(player.position);
-
-        // Borda de subida: entrou na caixa
-        if (armed && inside && !wasInside)
+    void OnTriggerEnter(Collider other)
+    {
+        // Verifica se o objeto que entrou é o jogador e se a zona está armada
+        if (armed && other.CompareTag("Player"))
         {
             AddScore();
 
             if (onlyOnce)
             {
                 armed = false;
-                enabled = false; // desativa este componente de vez
+                // Desativa apenas o collider de trigger para não ser acionado novamente
+                if (triggerCollider != null) triggerCollider.enabled = false;
             }
             else
             {
@@ -58,8 +93,6 @@ public class TrickScoreZone : MonoBehaviour
                 armReadyTime = Time.unscaledTime + rearmDelay;
             }
         }
-
-        wasInside = inside;
     }
 
     void AddScore()
@@ -72,6 +105,8 @@ public class TrickScoreZone : MonoBehaviour
         if (scoreController != null)
         {
             scoreController.ChangeScore(scoreAmount);
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX("DeliverySuccess");
         }
         else
         {
@@ -82,22 +117,7 @@ public class TrickScoreZone : MonoBehaviour
     void EnsureScoreControllerBound()
     {
         if (scoreController != null) return;
-        // Tenta localizar automaticamente um ScoreController na cena
-#if UNITY_2023_1_OR_NEWER
-        scoreController = Object.FindAnyObjectByType<ScoreController>();
-#else
-        scoreController = Object.FindObjectOfType<ScoreController>();
-#endif
-    }
-
-    bool IsInsideOBB(Vector3 worldPoint)
-    {
-        // Converte para espaço local do objeto (respeita posição/rotação/escala)
-        Vector3 local = transform.InverseTransformPoint(worldPoint) - boxCenter;
-        Vector3 half = boxSize * 0.5f;
-        return Mathf.Abs(local.x) <= half.x
-            && Mathf.Abs(local.y) <= half.y
-            && Mathf.Abs(local.z) <= half.z;
+        scoreController = FindFirstObjectByType<ScoreController>();
     }
 
     void OnDrawGizmos()
@@ -112,15 +132,20 @@ public class TrickScoreZone : MonoBehaviour
 
     void DrawGizmo()
     {
+        // Garante que temos uma referência, mesmo no modo de edição
+        if (triggerCollider == null)
+        {
+            SetupTriggerCollider();
+        }
+
         var prevColor = Gizmos.color;
         var prevMatrix = Gizmos.matrix;
 
-        // Usa a matriz completa do objeto (inclui rotação e escala)
         Gizmos.matrix = transform.localToWorldMatrix;
-        Gizmos.color = new Color(0.2f, 0.9f, 0.3f, 0.25f);
-        Gizmos.DrawCube(boxCenter, boxSize);
-        Gizmos.color = new Color(0.2f, 0.9f, 0.3f, 0.9f);
-        Gizmos.DrawWireCube(boxCenter, boxSize);
+        Gizmos.color = armed ? new Color(0.2f, 0.9f, 0.3f, 0.25f) : new Color(0.9f, 0.2f, 0.2f, 0.25f);
+        Gizmos.DrawCube(triggerCenter, triggerSize); // Usa as variáveis do script
+        Gizmos.color = armed ? new Color(0.2f, 0.9f, 0.3f, 0.9f) : new Color(0.9f, 0.2f, 0.2f, 0.9f);
+        Gizmos.DrawWireCube(triggerCenter, triggerSize);
 
         Gizmos.matrix = prevMatrix;
         Gizmos.color = prevColor;
