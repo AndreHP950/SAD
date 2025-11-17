@@ -16147,7 +16147,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5175632743032749790, guid: 497638e78cdab1942a4747b6e5b64b30, type: 3}
       propertyPath: HorizontalAxis.Value
-      value: 0
+      value: 147.2312
       objectReference: {fileID: 0}
     - target: {fileID: 5175632743032749790, guid: 497638e78cdab1942a4747b6e5b64b30, type: 3}
       propertyPath: HorizontalAxis.Center
