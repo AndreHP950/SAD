@@ -71786,6 +71786,26 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4371425133993491364, guid: 72d559c077fe3d74f9c08b4659e97d24, type: 3}
+      propertyPath: m_Type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4371425133993491364, guid: 72d559c077fe3d74f9c08b4659e97d24, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: c487943b78df8024e92df86e9ce3cb07, type: 3}
+    - target: {fileID: 4371425133993491364, guid: 72d559c077fe3d74f9c08b4659e97d24, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4371425133993491364, guid: 72d559c077fe3d74f9c08b4659e97d24, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4371425133993491364, guid: 72d559c077fe3d74f9c08b4659e97d24, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5246499443342732593, guid: 72d559c077fe3d74f9c08b4659e97d24, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -71803,7 +71823,8 @@ PrefabInstance:
       value: UIManager
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 1652714316603715528, guid: 72d559c077fe3d74f9c08b4659e97d24, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8118860489646594568, guid: 72d559c077fe3d74f9c08b4659e97d24, type: 3}
