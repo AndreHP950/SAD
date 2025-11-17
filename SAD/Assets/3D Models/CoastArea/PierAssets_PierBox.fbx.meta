@@ -3,7 +3,12 @@ guid: f62479e07529024458169b811c0a2522
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: PierAssetsMat
+    second: {fileID: 2100000, guid: 7e7159c9f5719be4cb2df2566d463394, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

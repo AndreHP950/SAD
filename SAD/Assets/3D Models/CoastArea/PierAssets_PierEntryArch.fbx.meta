@@ -3,7 +3,27 @@ guid: a852ec08bacdbc7488fc8068b53f2140
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: PierAssetsMat
+    second: {fileID: 2100000, guid: 7e7159c9f5719be4cb2df2566d463394, type: 2}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasMetal
+    second: {fileID: 2800000, guid: 1d04be74392627444bb50f8e541671f7, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasPierAssets
+    second: {fileID: 2800000, guid: 5f91f5ce39ea6f1409e23237f8792601, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasRough
+    second: {fileID: 2800000, guid: c461a59ee06735446b3475100e64d528, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
