@@ -3,7 +3,12 @@ guid: efa17212d6d971b46b2260f581a1abd8
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MetalFosco
+    second: {fileID: -876546973899608171, guid: f9aad82cf1d0fea4a8f06512aac60d26, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
