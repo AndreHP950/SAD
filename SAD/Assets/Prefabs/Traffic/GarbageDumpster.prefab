@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6608886139336701452}
   - component: {fileID: 3172171314598080827}
+  - component: {fileID: 1633613461686174027}
   m_Layer: 7
   m_Name: GarbageDumpster
   m_TagString: Untagged
@@ -46,12 +47,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9777e7f504e26c84bb9c5964f3f8ad9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boxCenter: {x: 0, y: 1.06, z: 0}
-  boxSize: {x: 0.7, y: 0.97, z: 0.7}
+  triggerCenter: {x: 0, y: 1.2, z: 0}
+  triggerSize: {x: 0.7, y: 0.7, z: 0.7}
   scoreAmount: 500
   scoreController: {fileID: 0}
   onlyOnce: 0
   rearmDelay: 2
+--- !u!65 &1633613461686174027
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8985044027554710891}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.7, y: 0.7, z: 0.7}
+  m_Center: {x: 0, y: 1.2, z: 0}
 --- !u!1001 &5076700457716682839
 PrefabInstance:
   m_ObjectHideFlags: 0
