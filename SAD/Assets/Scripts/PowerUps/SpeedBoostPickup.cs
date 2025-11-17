@@ -9,6 +9,39 @@ public class SpeedBoostPickup : MonoBehaviour
     public bool destroyOnPickup = true;
     public GameObject pickupVFX; // opcional
 
+    [Header("Animation")]
+    [Tooltip("Velocidade da flutuação vertical.")]
+    public float bobbingSpeed = 1.5f;
+    [Tooltip("Altura máxima da flutuação vertical.")]
+    public float bobbingHeight = 0.25f;
+    [Tooltip("Velocidade da rotação no eixo Y.")]
+    public float rotationSpeed = 50f;
+
+    // Estado interno para a animação
+    private Vector3 initialPosition;
+
+    void Start()
+    {
+        // Guarda a posição inicial para centralizar a animação de flutuação
+        initialPosition = transform.position;
+    }
+
+    void Update()
+    {
+        // Aplica as animações de flutuação e rotação a cada frame
+        AnimatePickup();
+    }
+
+    private void AnimatePickup()
+    {
+        // Animação de Flutuação (sobe e desce)
+        float newY = initialPosition.y + Mathf.Sin(Time.time * bobbingSpeed) * bobbingHeight;
+        transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+
+        // Animação de Rotação
+        transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
+    }
+
     void Reset()
     {
         var col = GetComponent<Collider>();
@@ -28,11 +61,13 @@ public class SpeedBoostPickup : MonoBehaviour
 
         if (pickupVFX != null)
             Instantiate(pickupVFX, transform.position, transform.rotation);
+
         // SFX: Toca o som de power-up
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlaySFX("PowerUP");
         }
+
         if (destroyOnPickup) Destroy(gameObject);
         else gameObject.SetActive(false);
     }

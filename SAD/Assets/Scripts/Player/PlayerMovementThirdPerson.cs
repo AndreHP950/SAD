@@ -246,4 +246,11 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     {
         currentMode = newMode;
     }
+
+    // NOVO: Método para parar completamente o momentum do jogador
+    public void StopMomentum()
+    {
+        moveVelocity = Vector3.zero;
+        velocity = Vector3.zero;
+    }
 }

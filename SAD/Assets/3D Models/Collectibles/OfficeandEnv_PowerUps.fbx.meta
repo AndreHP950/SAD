@@ -3,7 +3,22 @@ guid: 0e6345999a52fe747b16e5fb076ad57d
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AgiltyTex
+    second: {fileID: 2800000, guid: 45f7613c1ebc359438d1cb7296cb62e9, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: DoubleShotTex
+    second: {fileID: 2800000, guid: 97fdb9807f77759469e9ac09cab13a7a, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: FireRateTex
+    second: {fileID: 2800000, guid: cbb2f16975efc10408ece835bff59095, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0

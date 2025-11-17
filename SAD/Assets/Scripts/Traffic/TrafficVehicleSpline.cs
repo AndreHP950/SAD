@@ -98,6 +98,7 @@ public class TrafficVehicleSpline : MonoBehaviour
     int playerLayer = -1;
     AudioSource hornSource; // AudioSource dedicado para a buzina
     bool isHonking = false;
+    bool isBrakingAudioPlayed = false; // NOVO: Trava para o som de freio
 
     readonly Collider[] depenBuffer = new Collider[16];
     readonly RaycastHit[] sensorBuffer = new RaycastHit[16];
@@ -203,13 +204,6 @@ public class TrafficVehicleSpline : MonoBehaviour
             if (gap <= 0.01f)
             {
                 desiredSpeed = 0f;
-
-                // Toca som de buzina se o player bloquear o caminho
-                if (hitKind == BlockKind.Player)
-                {
-                    if (AudioManager.Instance != null)
-                        AudioManager.Instance.PlaySFX("CarHorn");
-                }
             }
             else
             {
@@ -234,18 +228,23 @@ public class TrafficVehicleSpline : MonoBehaviour
             desiredSpeed = 0f;
         }
 
-        // 5) Anti-deadlock: Só ativa se o outro veículo estiver em sentido OPOSTO.
+        // 5) Anti-deadlock
         if (currentSpeed < minSpeedToConsiderMoving && desiredSpeed <= 0.05f)
         {
             stuckTimer += dt;
             if (stuckTimer >= stuckTimeout)
             {
-                if (blockKind == BlockKind.Vehicle && isOppositeDirection)
+                // Deadlock em cruzamento: se eu sou o primeiro da fila, começo a me mover lentamente.
+                if (blockKind == BlockKind.Intersection && currentIntersection != null && currentIntersection.IsFirstInQueue(this))
                 {
                     desiredSpeed = Mathf.Max(desiredSpeed, courtesyNudgeSpeed);
-                    // 🔊 SFX: travado atrás de outro veículo
-                    // TODO: AudioManager.Play("Horn_Blocked");
                 }
+                // Deadlock com veículo em sentido oposto
+                else if (blockKind == BlockKind.Vehicle && isOppositeDirection)
+                {
+                    desiredSpeed = Mathf.Max(desiredSpeed, courtesyNudgeSpeed);
+                }
+                // Deadlock com obstáculo genérico
                 else if (blockKind != BlockKind.Player && blockKind != BlockKind.Vehicle)
                 {
                     desiredSpeed = courtesyNudgeSpeed;
@@ -264,7 +263,7 @@ public class TrafficVehicleSpline : MonoBehaviour
         // Integração da velocidade
         float accel = (desiredSpeed >= currentSpeed) ? acceleration : comfortableDeceleration;
         // Toca som de freio brusco
-        if (desiredSpeed <= 0.001f && currentSpeed > 1.0f) 
+        if (desiredSpeed <= 0.001f && currentSpeed > 1.0f)
         {
             accel *= hardBrakeDamping;
             // O som de freio agora é controlado em HandleAudio
@@ -321,11 +320,22 @@ public class TrafficVehicleSpline : MonoBehaviour
 
     private void HandleAudio(BlockKind currentHit)
     {
-        // Lógica de Freio: Toca se estiver freando por causa do player
-        if (currentHit == BlockKind.Player && currentSpeed > 1.0f && IsBrakingHard())
+        bool isCurrentlyBrakingForPlayer = currentHit == BlockKind.Player && currentSpeed > 1.0f && IsBrakingHard();
+
+        // Lógica de Freio: Toca se estiver freando por causa do player e se o som ainda não tocou.
+        if (isCurrentlyBrakingForPlayer)
         {
-            if (AudioManager.Instance != null)
-                AudioManager.Instance.PlaySFX("CarBreak");
+            if (!isBrakingAudioPlayed)
+            {
+                if (AudioManager.Instance != null)
+                    AudioManager.Instance.PlaySFX("CarBreak");
+                isBrakingAudioPlayed = true; // Ativa a trava
+            }
+        }
+        else
+        {
+            // Rearma a trava quando não estiver mais freando pelo player
+            isBrakingAudioPlayed = false;
         }
 
         // Lógica da Buzina

@@ -145,7 +145,7 @@ MonoBehaviour:
     m_Bits: 2056
   sensorShape: 0
   sensorOrigin: {fileID: 7149032561175835670}
-  sensorLength: 8
+  sensorLength: 6
   sensorSize: {x: 3.5, y: 3}
   sensorForwardOffset: 0
   sensorUpOffset: 0
@@ -156,6 +156,7 @@ MonoBehaviour:
   courtesyNudgeSpeed: 0.6
   maxWaitWhenBlockedByVehicle: 2
   forceProceedSpeed: 1
+  timeToStartHonking: 2
   groundMask:
     serializedVersion: 2
     m_Bits: 64
@@ -163,7 +164,7 @@ MonoBehaviour:
   groundRayLength: 3
   alignToGroundNormal: 1
   visualRoot: {fileID: 0}
-  hardBrakeDamping: 2
+  hardBrakeDamping: 25
   playerLayerName: Player
   depenetrationMask:
     serializedVersion: 2
@@ -275,7 +276,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
