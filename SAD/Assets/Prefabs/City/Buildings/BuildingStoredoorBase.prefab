@@ -72,7 +72,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: BuildingStoredoorBase
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: -9003569893482382316, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
@@ -81,8 +82,38 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7842207736428937962}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -8958863935067419842, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8374856244958612912}
   m_SourcePrefab: {fileID: 100100000, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
+--- !u!1 &5979161904197964265 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -8958863935067419842, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
+  m_PrefabInstance: {fileID: 5859737978770496215}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &8374856244958612912
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5979161904197964265}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 2532687579668145324, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
 --- !u!4 &6258668504267259196 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}

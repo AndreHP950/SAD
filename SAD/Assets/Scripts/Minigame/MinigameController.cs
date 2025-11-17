@@ -161,8 +161,11 @@ public class MinigameController : MonoBehaviour
         catchCooldown = initialCatchCooldown; // Inicia o cooldown de captura
         state = MinigameState.Running;
 
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
+        if (!GameManager.instance.isMobile)
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
     }
 
     void Update()

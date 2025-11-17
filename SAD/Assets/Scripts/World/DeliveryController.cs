@@ -42,6 +42,7 @@ public class DeliveryController : MonoBehaviour
     [SerializeField] int baseDeliveryScoreValue = 200;
     [SerializeField] int scoreDistanceMultiplier = 10;
     ScoreController scoreController;
+    private float timeDivider;
 
     [Header("Package Values")]
     [Tooltip("Lista de prefabs de pacotes para instanciar aleatoriamente.")]
@@ -88,6 +89,8 @@ public class DeliveryController : MonoBehaviour
 
         GetMailboxes();
         if (mailboxes.Count > 1) CreateDelivery(-1);
+
+        timeDivider = GameManager.instance.CurrentCharacter.characterPrefab.GetComponent<PlayerMovementThirdPerson>().speed / 10;
     }
 
     void Update()
@@ -251,7 +254,11 @@ public class DeliveryController : MonoBehaviour
             deliverGoal = mailboxes[boxNumber].target;
             mailboxDistance = Vector3.Distance(mailboxes[boxNumber].mailbox.transform.position, mailboxes[mailboxes[boxNumber].target].mailbox.transform.position);
             currentDeliveryTime = (int)mailboxDistance / DistanceDivisionValue;
-            matchTimeController.currentTime += (int)(currentDeliveryTime / 2);
+
+            if (currentDeliveryTime < 10) currentDeliveryTime = 10;
+            else if (currentDeliveryTime > 50) currentDeliveryTime = 50;
+
+            matchTimeController.currentTime += (int)(currentDeliveryTime / timeDivider);
 
             for (int i = 0; i < mailboxes.Count; i++)
             {
@@ -440,7 +447,7 @@ public class DeliveryController : MonoBehaviour
     {
         nextAreaValue = nextArea - 1;
 
-        matchTimeController.currentTime += (int)((int)Vector3.Distance(player.transform.position, areaStartingPoints[nextAreaValue].transform.position) / DistanceDivisionValue / 2);
+        matchTimeController.currentTime += (int)((int)Vector3.Distance(player.transform.position, areaStartingPoints[nextAreaValue].transform.position) / DistanceDivisionValue / timeDivider);
 
         minimapTargetIndicator.target = areaStartingPoints[nextAreaValue];
         areaStartingPoints[nextAreaValue].gameObject.SetActive(true);

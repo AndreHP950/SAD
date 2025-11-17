@@ -46,6 +46,11 @@ public class UIManager : MonoBehaviour
         if (!transition.gameObject.activeInHierarchy) transition.gameObject.SetActive(true);
         if (SceneManager.GetActiveScene().name == "Game" && gameUI.gameObject.activeInHierarchy == false) gameUI.gameObject.SetActive(true);
         else if (SceneManager.GetActiveScene().name == "MainMenu") gameUI.gameObject.SetActive(false);
+
+        if (!GameManager.instance.isMobile)
+        {
+            mobileHUD.gameObject.SetActive(false);
+        }
     }
 
     private void Start()

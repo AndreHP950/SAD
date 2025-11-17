@@ -212,7 +212,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: BuildingStoredoorBase (2)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: -9003569893482382316, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
@@ -221,10 +222,40 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2404912306468464625}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -8958863935067419842, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6098699698427324816}
   m_SourcePrefab: {fileID: 100100000, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
 --- !u!4 &6386466852930782935 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
   m_PrefabInstance: {fileID: 6857839536907641148}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &6665406677287561730 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -8958863935067419842, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}
+  m_PrefabInstance: {fileID: 6857839536907641148}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &6098699698427324816
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6665406677287561730}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 2532687579668145324, guid: 72ff7af50c5a216469fe0d261bac06b5, type: 3}

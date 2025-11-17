@@ -757,6 +757,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: RecordPlate (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 5228252222976723007, guid: c3d015f87cac09a4b8fcf75edbf990b8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3863,7 +3867,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 545929302}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
   m_Name: 
@@ -4748,6 +4752,10 @@ PrefabInstance:
     - target: {fileID: 5228252222976723007, guid: c3d015f87cac09a4b8fcf75edbf990b8, type: 3}
       propertyPath: m_Name
       value: RecordPlate (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5228252222976723007, guid: c3d015f87cac09a4b8fcf75edbf990b8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5991,6 +5999,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: RecordPlate (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 5228252222976723007, guid: c3d015f87cac09a4b8fcf75edbf990b8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -6952,6 +6964,10 @@ PrefabInstance:
     - target: {fileID: 5228252222976723007, guid: c3d015f87cac09a4b8fcf75edbf990b8, type: 3}
       propertyPath: m_Name
       value: RecordPlate (5)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5228252222976723007, guid: c3d015f87cac09a4b8fcf75edbf990b8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -10578,6 +10594,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: RecordPlate (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 5228252222976723007, guid: c3d015f87cac09a4b8fcf75edbf990b8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -13467,6 +13487,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: RecordPlate
       objectReference: {fileID: 0}
+    - target: {fileID: 5228252222976723007, guid: c3d015f87cac09a4b8fcf75edbf990b8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -13572,7 +13596,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6845845521659754411, guid: 38e3a1d1ac9b0d0429ba02bea559fac9, type: 3}
       propertyPath: isMobile
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7265937093177387390, guid: 38e3a1d1ac9b0d0429ba02bea559fac9, type: 3}
       propertyPath: m_LocalPosition.x
