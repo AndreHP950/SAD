@@ -40,6 +40,8 @@ public class GameManager : MonoBehaviour
     public void Start()
     {
         UIManager.instance.UIAnimator.SetTrigger("Open");
+
+        if(isMobile) Application.targetFrameRate = 60;
     }
     public void Update()
     {
