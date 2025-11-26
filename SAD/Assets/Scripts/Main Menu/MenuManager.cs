@@ -176,7 +176,7 @@ public class MenuManager : MonoBehaviour
         EnableButtons();
 
         if (location == 1) mainMenuMaskAnimator.SetTrigger("TurnOn");
-        if (location == 4) GetSliderValues();
+        GetSliderValues();
     }
 
     public void CharacterSelectorMenuMovement(string nextCharacter)
@@ -197,9 +197,9 @@ public class MenuManager : MonoBehaviour
 
     private void GetSliderValues()
     {
-        masterSlider.value = PlayerPrefs.GetFloat("masterSlider", 1f);
-        musicSlider.value = PlayerPrefs.GetFloat("musicSlider", 1f);
-        effectsSlider.value = PlayerPrefs.GetFloat("effectsSlider", 1f);
+        masterSlider.value = PlayerPrefs.GetFloat("masterVol", 0.5f);
+        musicSlider.value = PlayerPrefs.GetFloat("musicVol", 0.5f);
+        effectsSlider.value = PlayerPrefs.GetFloat("effectsVol", 0.5f);
     }
 
     void DisableButtons()

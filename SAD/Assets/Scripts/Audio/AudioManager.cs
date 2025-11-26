@@ -124,7 +124,7 @@ public class AudioManager : MonoBehaviour
     {
         float db = Mathf.Log10(Mathf.Max(sliderValue, 0.0001f)) * 20f;
         audioMixer.SetFloat("masterVol", db);
-        PlayerPrefs.SetFloat("masterVol", db);
+        PlayerPrefs.SetFloat("masterVol", sliderValue);
         PlayerPrefs.Save();
     }
 
@@ -132,7 +132,7 @@ public class AudioManager : MonoBehaviour
     {
         float db = Mathf.Log10(Mathf.Max(sliderValue, 0.0001f)) * 20f;
         audioMixer.SetFloat("musicVol", db);
-        PlayerPrefs.SetFloat("musicVol", db);
+        PlayerPrefs.SetFloat("musicVol", sliderValue);
         PlayerPrefs.Save();
     }
 
@@ -140,7 +140,7 @@ public class AudioManager : MonoBehaviour
     {
         float db = Mathf.Log10(Mathf.Max(sliderValue, 0.0001f)) * 20f;
         audioMixer.SetFloat("effectsVol", db);
-        PlayerPrefs.SetFloat("effectsVol", db);
+        PlayerPrefs.SetFloat("effectsVol", sliderValue);
         PlayerPrefs.Save();
     }
 }
