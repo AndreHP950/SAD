@@ -55,7 +55,8 @@ public class PlayerMovementThirdPerson : MonoBehaviour
 
     // Componentes e Estado
     CharacterController characterController;
-    PlayerInputManager playerInputManager;
+    public PlayerInputManager playerInputManager;
+    private PlayerAnimationController animationController; // Referência para o controlador de animação
     public bool isMoving = true;
     private Vector3 velocity;
     private Vector3 moveVelocity;
@@ -65,6 +66,7 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     {
         characterController = GetComponent<CharacterController>();
         playerInputManager = GetComponent<PlayerInputManager>();
+        animationController = GetComponentInChildren<PlayerAnimationController>(); // Encontra o controlador nos filhos
 
         // Tenta encontrar as referências dinamicamente se não estiverem setadas
         if (speedLinesUI == null && UIManager.instance != null)
@@ -136,6 +138,12 @@ public class PlayerMovementThirdPerson : MonoBehaviour
             if (playerInputManager.GetJump() && characterController.isGrounded)
             {
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+                // Notifica o controlador de animação para tocar a animação de pulo
+                if (animationController != null)
+                {
+                    animationController.TriggerJumpAnimation();
+                }
             }
 
             if (characterController.isGrounded && velocity.y < 0) velocity.y = -2f;
@@ -163,7 +171,7 @@ public class PlayerMovementThirdPerson : MonoBehaviour
             Vector3 finalMove = (moveDir + velocity) * Time.deltaTime;
             characterController.Move(finalMove);
         }
-        
+
     }
 
     private void UpdateVelocity()
@@ -247,7 +255,7 @@ public class PlayerMovementThirdPerson : MonoBehaviour
         currentMode = newMode;
     }
 
-    // NOVO: Método para parar completamente o momentum do jogador
+
     public void StopMomentum()
     {
         moveVelocity = Vector3.zero;

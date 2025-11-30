@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 2281c38d5bc3a124a8d872fbd0848003
+guid: 007a356f2a22b7947b4f19f884facb30
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -7,18 +7,13 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Clothes
-    second: {fileID: 2100000, guid: 4f32458b07a3aaa4fb9ec68917b634fe, type: 2}
+      name: Couro
+    second: {fileID: 2100000, guid: 55e1175e3c12e3449b833e42a7d1b040, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Metal
-    second: {fileID: 2100000, guid: 5c07bd93bacc22e49b64b94de839810c, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Skin
-    second: {fileID: 2100000, guid: 23a1fc76aa778a74498cd3c7ca326377, type: 2}
+      name: MetalFosco
+    second: {fileID: 2100000, guid: c5aac3455591c8c45af4882cb7f41389, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -48,7 +43,7 @@ ModelImporter:
     isReadable: 0
   meshes:
     lODScreenPercentages: []
-    globalScale: 1.7
+    globalScale: 3
     meshCompression: 0
     addColliders: 0
     useSRGBMaterialColor: 1
@@ -103,7 +98,7 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
-    globalScale: 0.017
+    globalScale: 0.03
     rootMotionBoneName: 
     hasTranslationDoF: 0
     hasExtraRoot: 0
