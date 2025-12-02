@@ -96,9 +96,12 @@ public class TrafficVehicleSpline : MonoBehaviour
     Rigidbody rb;
     Collider bodyCol;
     int playerLayer = -1;
-    AudioSource hornSource; // AudioSource dedicado para a buzina
-    bool isHonking = false;
-    bool isBrakingAudioPlayed = false; // NOVO: Trava para o som de freio
+    AudioSource hornSource; // AudioSource dedicado 3d
+    bool isBrakingAudioPlayed = false;
+
+    // Timers para a nova lógica da buzina
+    float stationaryTimer = 0f;
+    float nextHonkTimer = 0f;
 
     readonly Collider[] depenBuffer = new Collider[16];
     readonly RaycastHit[] sensorBuffer = new RaycastHit[16];
@@ -220,7 +223,7 @@ public class TrafficVehicleSpline : MonoBehaviour
         }
 
         // Lógica de Áudio para Buzina e Freio
-        HandleAudio(hitKind);
+        HandleAudio(hitKind, dt);
 
         // 4) Evita empurrar fisicamente
         if (touchingSomething && touchingPlayerOrVehicle)
@@ -318,48 +321,51 @@ public class TrafficVehicleSpline : MonoBehaviour
         }
     }
 
-    private void HandleAudio(BlockKind currentHit)
+    private void HandleAudio(BlockKind currentHit, float dt)
     {
+        
         bool isCurrentlyBrakingForPlayer = currentHit == BlockKind.Player && currentSpeed > 1.0f && IsBrakingHard();
-
-        // Lógica de Freio: Toca se estiver freando por causa do player e se o som ainda não tocou.
         if (isCurrentlyBrakingForPlayer)
         {
             if (!isBrakingAudioPlayed)
             {
                 if (AudioManager.Instance != null)
-                    AudioManager.Instance.PlaySFX("CarBreak");
-                isBrakingAudioPlayed = true; // Ativa a trava
+                    AudioManager.Instance.PlaySFX(hornSource, "CarBreak");
+                isBrakingAudioPlayed = true;
             }
         }
         else
         {
-            // Rearma a trava quando não estiver mais freando pelo player
             isBrakingAudioPlayed = false;
         }
 
-        // Lógica da Buzina
-        if (currentHit == BlockKind.Player && blockTimer >= timeToStartHonking)
+        
+        // Se o veículo está parado
+        if (currentSpeed < minSpeedToConsiderMoving)
         {
-            // Se não estiver buzinando, começa o loop
-            if (!isHonking)
+            stationaryTimer += dt;
+
+            // Se ficou parado por mais de 3 segundos
+            if (stationaryTimer > 3f)
             {
-                if (AudioManager.Instance != null)
+                nextHonkTimer -= dt;
+
+                if (nextHonkTimer <= 0)
                 {
-                    // Usamos o AudioSource local para controlar o loop
-                    AudioManager.Instance.PlayLoopingSound(hornSource, "CarHorn");
-                    isHonking = true;
+                    // Toca a buzina
+                    if (AudioManager.Instance != null)
+                        AudioManager.Instance.PlaySFX(hornSource, "CarHorn");
+
+                    // Reseta o timer para a próxima buzina com um valor aleatório
+                    nextHonkTimer = Random.Range(4f, 6f);
                 }
             }
         }
         else
         {
-            // Se estiver buzinando mas o player saiu da frente, para o loop
-            if (isHonking)
-            {
-                hornSource.Stop();
-                isHonking = false;
-            }
+            // Se o veículo começou a se mover, reseta os timers
+            stationaryTimer = 0f;
+            nextHonkTimer = 0f;
         }
     }
 

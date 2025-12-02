@@ -26,14 +26,14 @@ public class MatchTimeController : MonoBehaviour
         if (currentTime > 0)
         {
             currentTime -= Time.deltaTime;
-            matchTimer.text = currentTime.ToString("F2");
-            pauseMatchTimer.text = currentTime.ToString("F2");
+            matchTimer.text = currentTime.ToString("F0");
+            pauseMatchTimer.text = currentTime.ToString("F0");
         }
         else
         {
             currentTime = 0;
-            matchTimer.text = currentTime.ToString("F2");
-            pauseMatchTimer.text = currentTime.ToString("F2");
+            matchTimer.text = currentTime.ToString("F0");
+            pauseMatchTimer.text = currentTime.ToString("F0");
             TimeEnd();
         }
     }

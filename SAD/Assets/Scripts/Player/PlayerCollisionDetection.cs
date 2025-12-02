@@ -15,6 +15,8 @@ public class PlayerCollisionDetection : MonoBehaviour
 {
     [SerializeField] DeliveryController deliveryController;
     PlayerRespawn playerRespawn;
+    private PlayerAnimationController animationController; // Referência para a animação
+
     public int boxNumber;
     public bool mailboxRange = false;
     public List<AreaCollectables> areaCollectablesList = new List<AreaCollectables>();
@@ -27,34 +29,13 @@ public class PlayerCollisionDetection : MonoBehaviour
     {
         deliveryController = GameObject.Find("Mailboxes").GetComponent<DeliveryController>();
         playerRespawn = GetComponent<PlayerRespawn>();
+        animationController = GetComponentInChildren<PlayerAnimationController>(); // Pega a referência
 
         GetAvailableAreaCollectables();
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        
-        //if (other.transform.CompareTag("Mailbox"))
-        //{
-        //    boxNumber = deliveryController.mailboxes.FindIndex(m => m.mailbox == other.gameObject);
-        //    mailboxRange = true;
-
-        //    if (boxNumber >= 0)
-        //    {
-        //        if (!deliveryController.isDelivering)
-        //        {
-        //            deliveryController.StartDelivery(boxNumber);
-        //        }
-        //        else if (!deliveryController.isFailed)
-        //        {
-        //            if (boxNumber == deliveryController.deliverGoal)
-        //            {
-        //                deliveryController.EndDelivery(boxNumber, true);
-        //            }
-        //        }
-        //    }  
-        //}
-
         switch (other.transform.tag)
         {
             case "Mailbox":
@@ -77,8 +58,6 @@ public class PlayerCollisionDetection : MonoBehaviour
                 }
                 break;
             case "Water":
-                //TODO: Respawn player
-                // SFX: Toca som de agua
                 if (AudioManager.Instance != null)
                 {
                     AudioManager.Instance.PlaySFX("WaterSplash");
@@ -87,6 +66,12 @@ public class PlayerCollisionDetection : MonoBehaviour
                 break;
 
             case "AreaCollectable":
+                // Dispara a animação de coleta (usando o padrão, que é a direita)
+                if (animationController != null)
+                {
+                    animationController.TriggerCollectAnimation();
+                }
+
                 AreaCollectables data = areaCollectablesList.Find(item => item.areaCollectable == other.gameObject);
 
                 if (data == null)
@@ -94,7 +79,6 @@ public class PlayerCollisionDetection : MonoBehaviour
                     Debug.Log("Collectable not found in list.");
                     return;
                 }
-                // SFX: Toca som de coletável
                 if (AudioManager.Instance != null)
                 {
                     AudioManager.Instance.PlaySFX("Collectable");

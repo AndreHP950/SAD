@@ -78,6 +78,23 @@ public class AudioManager : MonoBehaviour
             Debug.LogWarning($"AudioManager: SFX '{clipName}' não encontrado!");
         }
     }
+    public void PlaySFX(AudioSource source, string clipName) // 3d sound
+    {
+        if (source == null)
+        {
+            Debug.LogWarning($"AudioManager: AudioSource fornecido é nulo.");
+            return;
+        }
+
+        if (audioClips.TryGetValue(clipName, out AudioClip clip))
+        {
+            source.PlayOneShot(clip);
+        }
+        else
+        {
+            Debug.LogWarning($"AudioManager: SFX '{clipName}' não encontrado!");
+        }
+    }
 
     public void PlayLoopingSound(AudioSource source, string clipName)
     {

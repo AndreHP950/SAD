@@ -146,7 +146,7 @@ MonoBehaviour:
   sensorShape: 0
   sensorOrigin: {fileID: 7149032561175835670}
   sensorLength: 6
-  sensorSize: {x: 3.5, y: 3}
+  sensorSize: {x: 2.2, y: 3}
   sensorForwardOffset: 0
   sensorUpOffset: 0
   obeyIntersections: 1
@@ -238,7 +238,7 @@ AudioSource:
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
-  Priority: 128
+  Priority: 50
   DopplerLevel: 1
   MinDistance: 1
   MaxDistance: 500

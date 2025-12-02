@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 
@@ -18,6 +19,15 @@ public class ScoreController : MonoBehaviour
     public void ChangeScore(int scoreValue)
     {
         score += scoreValue;
+
+        ChangedValueSpawner changedValue = scoreText.gameObject.GetComponent<ChangedValueSpawner>();
+        changedValue.SpawnText(scoreValue);
+        StartCoroutine(FinishedMovingText());
+    }
+
+    IEnumerator FinishedMovingText()
+    {
+        yield return new WaitForSeconds(0.5f);
         pauseScoreText.text = score.ToString();
         scoreText.text = score.ToString();
     }

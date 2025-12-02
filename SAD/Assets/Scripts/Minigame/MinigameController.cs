@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Unity.Cinemachine;
+using TMPro;
 
 public class MinigameController : MonoBehaviour
 {
@@ -14,6 +15,13 @@ public class MinigameController : MonoBehaviour
     public Image vignetteImage;
     public float vignettePulseSpeed = 4f;
     public Color vignetteColor = new Color(0.7f, 0f, 0f, 0.5f);
+    [Tooltip("Velocidade do pulso de escala do texto de alerta.")]
+    [SerializeField] private float alertPulseSpeed = 2f;
+    [Tooltip("Escala mínima do pulso.")]
+    [SerializeField] private float alertMinScale = 0.95f;
+    [Tooltip("Escala máxima do pulso.")]
+    [SerializeField] private float alertMaxScale = 1.05f;
+
 
     [Header("First-Person (FPV)")]
     [Tooltip("Se quiser controlar a vcam em vez de parentar a Main Camera, arraste-a aqui.")]
@@ -49,6 +57,10 @@ public class MinigameController : MonoBehaviour
     float timer;
     float catchCooldown; // NOVO: Timer para o cooldown de captura
 
+    // Referências para o texto de alerta
+    private TextMeshProUGUI minigameAlertText;
+    private RectTransform alertTextRect;
+
     // player renderers storage
     Renderer[] playerRenderers;
     bool[] playerRenderersPrevState;
@@ -57,6 +69,25 @@ public class MinigameController : MonoBehaviour
     {
         mainCam = Camera.main;
         if (vignetteImage != null) vignetteImage.gameObject.SetActive(false);
+
+        // Encontra o texto de alerta automaticamente para não perder a referência
+        if (UIManager.instance != null)
+        {
+            Transform textTransform = UIManager.instance.transform.Find("GameUI/Minigame Alert");
+            if (textTransform != null)
+            {
+                minigameAlertText = textTransform.GetComponent<TextMeshProUGUI>();
+                alertTextRect = textTransform.GetComponent<RectTransform>();
+                if (minigameAlertText != null)
+                {
+                    minigameAlertText.gameObject.SetActive(false);
+                }
+            }
+            else
+            {
+                Debug.LogWarning("O objeto 'Minigame Alert' não foi encontrado dentro de 'GameUI' no UIManager.");
+            }
+        }
     }
 
     // Iniciado pelo RatTrigger: apenas recebe o RatAI (que já tem suas splines)
@@ -156,6 +187,12 @@ public class MinigameController : MonoBehaviour
             vignetteImage.gameObject.SetActive(true);
         }
 
+        // Ativa o texto de alerta
+        if (minigameAlertText != null)
+        {
+            minigameAlertText.gameObject.SetActive(true);
+        }
+
         // start timer e cooldown
         timer = chaseDuration;
         catchCooldown = initialCatchCooldown; // Inicia o cooldown de captura
@@ -178,12 +215,20 @@ public class MinigameController : MonoBehaviour
             catchCooldown -= Time.deltaTime;
         }
 
+        // Animação de pulso da vinheta
         if (vignetteImage != null)
         {
             float a = 0.5f + 0.5f * Mathf.Sin(Time.time * vignettePulseSpeed);
             Color c = vignetteImage.color;
             c.a = vignetteColor.a * a;
             vignetteImage.color = c;
+        }
+
+        // Animação de pulso do texto de alerta
+        if (alertTextRect != null)
+        {
+            float scale = Mathf.Lerp(alertMinScale, alertMaxScale, (Mathf.Sin(Time.time * alertPulseSpeed) + 1f) / 2f);
+            alertTextRect.localScale = new Vector3(scale, scale, 1f);
         }
 
         timer -= Time.deltaTime;
@@ -256,6 +301,12 @@ public class MinigameController : MonoBehaviour
         if (cameraBobbing != null) cameraBobbing.SetPlayerMovement(null);
 
         if (vignetteImage != null) vignetteImage.gameObject.SetActive(false);
+
+        // Desativa o texto de alerta
+        if (minigameAlertText != null)
+        {
+            minigameAlertText.gameObject.SetActive(false);
+        }
 
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
