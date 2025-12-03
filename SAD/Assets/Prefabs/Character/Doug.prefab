@@ -220,7 +220,7 @@ MonoBehaviour:
   deceleration: 5
   rotation: 10
   minigameSpeed: 15
-  minigameRotation: 10
+  minigameRotation: 3
   gravity: -20
   jumpHeight: 1
   slideSpeed: 2
