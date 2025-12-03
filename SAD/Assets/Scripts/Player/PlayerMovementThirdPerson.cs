@@ -5,27 +5,28 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerInputManager))]
 public class PlayerMovementThirdPerson : MonoBehaviour
 {
-    // Enum para definir o modo de movimento
     public enum MovementMode { Normal, Minigame }
     private MovementMode currentMode = MovementMode.Normal;
 
     [Header("Movement")]
-    public float speed = 5f;
-    public float acceleration = 10f;
-    public float deceleration = 8f;
+    [Tooltip("A velocidade máxima que o personagem pode atingir.")]
+    public float speed = 7f;
+    [Tooltip("A rapidez com que o personagem atinge a velocidade máxima.")]
+    public float acceleration = 15f;
+    [Tooltip("A rapidez com que o personagem para ao soltar os controles.")]
+    public float deceleration = 20f;
 
     [Header("Rotation")]
-    public float rotation = 10f;
+    [Tooltip("A rapidez com que o personagem vira para a direção do movimento. Valores mais altos = mais ágil.")]
+    public float rotationSpeed = 15f;
 
     [Header("Minigame Precise Mode")]
-    [Tooltip("Velocidade do jogador durante o minigame.")]
-    public float minigameSpeed = 10f;
-    [Tooltip("Velocidade de rotação do jogador durante o minigame (menor = mais suave e preciso).")]
-    public float minigameRotation = 4f;
+    public float minigameSpeed = 5f;
+    public float minigameRotation = 10f;
 
     [Header("Y Movement")]
-    public float gravity = -9.81f;
-    public float jumpHeight = 2f;
+    public float gravity = -20f;
+    public float jumpHeight = 2.5f;
 
     [Header("Slope Sliding")]
     public float slideSpeed = 2f;
@@ -42,7 +43,6 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     public float massScaleMax = 3f;
 
     [Header("Power-up: Speed")]
-    [Tooltip("Raiz do VFX (por exemplo, GameObject com UIParticle no Canvas).")]
     public GameObject speedLinesUI;
     private float speedBoostMultiplier = 1f;
     private float speedBoostTimer = 0f;
@@ -50,13 +50,12 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     [Header("Referências")]
     public Transform cameraTransform;
     public TextMeshProUGUI speedText;
-    [Tooltip("Pivô da câmera para o modo FPV (primeira pessoa) durante minigames.")]
     public Transform fpvCameraPivot;
 
     // Componentes e Estado
     CharacterController characterController;
     public PlayerInputManager playerInputManager;
-    private PlayerAnimationController animationController; // Referência para o controlador de animação
+    private PlayerAnimationController animationController;
     public bool isMoving = true;
     private Vector3 velocity;
     private Vector3 moveVelocity;
@@ -66,28 +65,24 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     {
         characterController = GetComponent<CharacterController>();
         playerInputManager = GetComponent<PlayerInputManager>();
-        animationController = GetComponentInChildren<PlayerAnimationController>(); // Encontra o controlador nos filhos
+        animationController = GetComponentInChildren<PlayerAnimationController>();
 
-        // Tenta encontrar as referências dinamicamente se não estiverem setadas
-        if (speedLinesUI == null && UIManager.instance != null)
+        if (cameraTransform == null && Camera.main != null)
         {
-            var uiParticle = UIManager.instance.transform.Find("UIParticle");
-            if (uiParticle != null) speedLinesUI = uiParticle.gameObject;
+            cameraTransform = Camera.main.transform;
         }
         if (fpvCameraPivot == null)
         {
             fpvCameraPivot = transform.Find("FPVCameraPivot");
         }
-        if (cameraTransform == null && Camera.main != null)
+        if (speedLinesUI == null && UIManager.instance != null)
         {
-            cameraTransform = Camera.main.transform;
+            var uiParticle = UIManager.instance.transform.Find("UIParticle");
+            if (uiParticle != null) speedLinesUI = uiParticle.gameObject;
         }
 
         lastPos = transform.position;
-
-        // Desativa o efeito de velocidade no início
-        if (speedLinesUI != null)
-            speedLinesUI.SetActive(false);
+        if (speedLinesUI != null) speedLinesUI.SetActive(false);
     }
 
     private void Update()
@@ -112,66 +107,68 @@ public class PlayerMovementThirdPerson : MonoBehaviour
 
     private void Movement()
     {
-        if (isMoving)
+        if (!isMoving) return;
+
+        // --- 1. Leitura do Input e Direção Relativa à Câmera ---
+        float horizontal = playerInputManager.GetHorizontal();
+        float vertical = playerInputManager.GetVertical();
+
+        Vector3 camForward = cameraTransform.forward;
+        Vector3 camRight = cameraTransform.right;
+        camForward.y = 0;
+        camRight.y = 0;
+        camForward.Normalize();
+        camRight.Normalize();
+
+        Vector3 inputDir = (camForward * vertical + camRight * horizontal);
+
+        // --- 2. Rotação do Personagem ---
+        // O personagem agora vira na direção do INPUT, não da velocidade.
+        // Isso dá a resposta imediata que você quer.
+        if (inputDir.magnitude > 0.1f)
         {
-            float horizontal = playerInputManager.GetHorizontal();
-            float vertical = playerInputManager.GetVertical();
-
-            Vector3 camForward = cameraTransform.forward;
-            Vector3 camRight = cameraTransform.right;
-
-            camForward.y = 0;
-            camRight.y = 0;
-            camForward.Normalize();
-            camRight.Normalize();
-
-            Vector3 inputDir = (camForward * vertical + camRight * horizontal).normalized;
-
-            // Usa a velocidade correta para o modo atual e aplica o power-up
-            float baseSpeed = currentMode == MovementMode.Minigame ? minigameSpeed : speed;
-            float currentMaxSpeed = baseSpeed * speedBoostMultiplier;
-            Vector3 targetVelocity = inputDir * currentMaxSpeed;
-
-            float lerpSpeed = (inputDir.magnitude > 0.1f) ? acceleration : deceleration;
-            moveVelocity = Vector3.Lerp(moveVelocity, targetVelocity, lerpSpeed * Time.deltaTime);
-
-            if (playerInputManager.GetJump() && characterController.isGrounded)
-            {
-                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-
-                // Notifica o controlador de animação para tocar a animação de pulo
-                if (animationController != null)
-                {
-                    animationController.TriggerJumpAnimation();
-                }
-            }
-
-            if (characterController.isGrounded && velocity.y < 0) velocity.y = -2f;
-            velocity.y += gravity * Time.deltaTime;
-
-            Vector3 flatVel = new Vector3(moveVelocity.x, 0f, moveVelocity.z);
-            if (flatVel.magnitude > 0.1f)
-            {
-                // Usa a rotação correta para o modo atual
-                float currentRotation = currentMode == MovementMode.Minigame ? minigameRotation : rotation;
-                Quaternion targetRotation = Quaternion.LookRotation(flatVel);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotation * Time.deltaTime);
-            }
-
-            Vector3 moveDir = transform.forward * flatVel.magnitude;
-
-            Vector3 slideDir;
-            isSliding = CheckSlope(out slideDir);
-
-            if (isSliding)
-            {
-                moveDir += slideDir * slideSpeed;
-            }
-
-            Vector3 finalMove = (moveDir + velocity) * Time.deltaTime;
-            characterController.Move(finalMove);
+            float currentRotationSpeed = (currentMode == MovementMode.Minigame) ? minigameRotation : rotationSpeed;
+            Quaternion targetRotation = Quaternion.LookRotation(inputDir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
         }
 
+        // --- 3. Cálculo da Velocidade (Inércia) ---
+        // A velocidade alvo agora é baseada na direção para a qual o personagem ESTÁ VIRADO.
+        float baseSpeed = (currentMode == MovementMode.Minigame) ? minigameSpeed : speed;
+        float currentMaxSpeed = baseSpeed * speedBoostMultiplier;
+
+        // O personagem tenta acelerar na direção para a qual está virado, mas apenas se houver input.
+        Vector3 targetVelocity = transform.forward * currentMaxSpeed * inputDir.magnitude;
+
+        // A aceleração/desaceleração continua usando Lerp para suavidade.
+        float lerpSpeed = (inputDir.magnitude > 0.1f) ? acceleration : deceleration;
+        moveVelocity = Vector3.Lerp(moveVelocity, targetVelocity, lerpSpeed * Time.deltaTime);
+
+        // --- 4. Movimento Vertical (Pulo e Gravidade) ---
+        if (playerInputManager.GetJump() && characterController.isGrounded)
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            if (animationController != null)
+            {
+                animationController.TriggerJumpAnimation();
+            }
+        }
+
+        if (characterController.isGrounded && velocity.y < 0) velocity.y = -2f;
+        velocity.y += gravity * Time.deltaTime;
+
+        // --- 5. Aplicação do Movimento ---
+        Vector3 finalMove = moveVelocity + velocity;
+
+        // Adiciona deslizamento em rampas se necessário
+        Vector3 slideDir;
+        isSliding = CheckSlope(out slideDir);
+        if (isSliding)
+        {
+            finalMove += slideDir * slideSpeed;
+        }
+
+        characterController.Move(finalMove * Time.deltaTime);
     }
 
     private void UpdateVelocity()
@@ -204,24 +201,18 @@ public class PlayerMovementThirdPerson : MonoBehaviour
 
     void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        if ((pushableLayers.value & (1 << hit.gameObject.layer)) == 0)
-            return;
+        if ((pushableLayers.value & (1 << hit.gameObject.layer)) == 0) return;
 
         Rigidbody rb = hit.collider.attachedRigidbody;
-        if (rb == null || rb.isKinematic)
-            return;
-        if (hit.moveDirection.y < -0.3f) // Não empurrar se estivermos caindo sobre o objeto
-            return;
+        if (rb == null || rb.isKinematic) return;
+        if (hit.moveDirection.y < -0.3f) return;
 
         float currentSpeed = new Vector3(moveVelocity.x, 0f, moveVelocity.z).magnitude;
-        if (currentSpeed < minSpeedToPush)
-            return;
+        if (currentSpeed < minSpeedToPush) return;
 
-        // Calcula a escala de força baseada na massa do objeto
         float mass = Mathf.Max(rb.mass, 0.01f);
         float massScale = Mathf.Clamp(massScaleK / Mathf.Pow(mass, massScaleExponent), massScaleMin, massScaleMax);
 
-        // Aplica a força
         Vector3 pushDir = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z).normalized;
         Vector3 force = pushDir * pushPower * currentSpeed * massScale;
         rb.AddForceAtPosition(force, hit.point, ForceMode.VelocityChange);
@@ -237,7 +228,7 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     public void ForceLookAt(Vector3 targetPosition)
     {
         Vector3 direction = targetPosition - transform.position;
-        direction.y = 0; // Mantém a rotação apenas no plano horizontal
+        direction.y = 0;
         if (direction.sqrMagnitude > 0.01f)
         {
             transform.rotation = Quaternion.LookRotation(direction.normalized);
@@ -246,15 +237,13 @@ public class PlayerMovementThirdPerson : MonoBehaviour
 
     public float GetHorizontalSpeed()
     {
-        Vector3 h = new Vector3(moveVelocity.x, 0f, moveVelocity.z);
-        return h.magnitude;
+        return new Vector3(moveVelocity.x, 0f, moveVelocity.z).magnitude;
     }
 
     public void SetMovementMode(MovementMode newMode)
     {
         currentMode = newMode;
     }
-
 
     public void StopMomentum()
     {

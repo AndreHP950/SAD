@@ -215,10 +215,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e699dc1e98cfbe24f8344c470060447c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 30
+  speed: 15
   acceleration: 3
-  deceleration: 5
-  rotation: 10
+  deceleration: 15
+  rotationSpeed: 10
   minigameSpeed: 15
   minigameRotation: 3
   gravity: -20
