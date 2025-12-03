@@ -124,7 +124,7 @@ public class PlayerMovementThirdPerson : MonoBehaviour
 
         // --- 2. Rotação do Personagem ---
         // O personagem agora vira na direção do INPUT, não da velocidade.
-        // Isso dá a resposta imediata que você quer.
+
         if (inputDir.magnitude > 0.1f)
         {
             float currentRotationSpeed = (currentMode == MovementMode.Minigame) ? minigameRotation : rotationSpeed;
