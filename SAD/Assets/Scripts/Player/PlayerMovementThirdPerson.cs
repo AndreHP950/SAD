@@ -47,6 +47,19 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     private float speedBoostMultiplier = 1f;
     private float speedBoostTimer = 0f;
 
+    [Header("VFX: Smoke Trail")]
+    [Tooltip("GameObject do VFX de fumaça/trail. Deixe vazio se não quiser usar.")]
+    public GameObject smokeTrailVFX;
+    [Tooltip("Velocidade mínima (m/s) para ativar o trail de fumaça.")]
+    public float smokeTrailMinSpeed = 4f;
+    private ParticleSystem smokeTrailParticle;
+    private bool smokeTrailEmitting = false;
+
+    [Header("VFX: Jump")]
+    [Tooltip("GameObject do VFX de pulo. Deixe vazio se não quiser usar.")]
+    public GameObject jumpVFX;
+    private ParticleSystem jumpParticle;
+
     [Header("Referências")]
     public Transform cameraTransform;
     public TextMeshProUGUI speedText;
@@ -83,6 +96,23 @@ public class PlayerMovementThirdPerson : MonoBehaviour
 
         lastPos = transform.position;
         if (speedLinesUI != null) speedLinesUI.SetActive(false);
+
+        // Inicializa o ParticleSystem do smoke trail
+        if (smokeTrailVFX != null)
+        {
+            smokeTrailParticle = smokeTrailVFX.GetComponentInChildren<ParticleSystem>();
+            if (smokeTrailParticle != null)
+            {
+                var emission = smokeTrailParticle.emission;
+                emission.enabled = false;
+            }
+        }
+
+        // Inicializa o ParticleSystem do pulo
+        if (jumpVFX != null)
+        {
+            jumpParticle = jumpVFX.GetComponentInChildren<ParticleSystem>();
+        }
     }
 
     private void Update()
@@ -90,6 +120,7 @@ public class PlayerMovementThirdPerson : MonoBehaviour
         HandlePowerUpTimer();
         Movement();
         UpdateVelocity();
+        HandleSmokeTrail();
     }
 
     private void HandlePowerUpTimer()
@@ -102,6 +133,29 @@ public class PlayerMovementThirdPerson : MonoBehaviour
                 speedBoostMultiplier = 1f;
                 if (speedLinesUI != null) speedLinesUI.SetActive(false);
             }
+        }
+    }
+
+    private void HandleSmokeTrail()
+    {
+        if (smokeTrailParticle == null) return;
+
+        float currentSpeed = GetHorizontalSpeed();
+        bool shouldEmit = currentSpeed >= smokeTrailMinSpeed && characterController.isGrounded;
+
+        if (shouldEmit != smokeTrailEmitting)
+        {
+            var emission = smokeTrailParticle.emission;
+            emission.enabled = shouldEmit;
+            smokeTrailEmitting = shouldEmit;
+        }
+    }
+
+    private void PlayJumpVFX()
+    {
+        if (jumpParticle != null)
+        {
+            jumpParticle.Play();
         }
     }
 
@@ -123,8 +177,6 @@ public class PlayerMovementThirdPerson : MonoBehaviour
         Vector3 inputDir = (camForward * vertical + camRight * horizontal);
 
         // --- 2. Rotação do Personagem ---
-        // O personagem agora vira na direção do INPUT, não da velocidade.
-
         if (inputDir.magnitude > 0.1f)
         {
             float currentRotationSpeed = (currentMode == MovementMode.Minigame) ? minigameRotation : rotationSpeed;
@@ -133,14 +185,11 @@ public class PlayerMovementThirdPerson : MonoBehaviour
         }
 
         // --- 3. Cálculo da Velocidade (Inércia) ---
-        // A velocidade alvo agora é baseada na direção para a qual o personagem ESTÁ VIRADO.
         float baseSpeed = (currentMode == MovementMode.Minigame) ? minigameSpeed : speed;
         float currentMaxSpeed = baseSpeed * speedBoostMultiplier;
 
-        // O personagem tenta acelerar na direção para a qual está virado, mas apenas se houver input.
         Vector3 targetVelocity = transform.forward * currentMaxSpeed * inputDir.magnitude;
 
-        // A aceleração/desaceleração continua usando Lerp para suavidade.
         float lerpSpeed = (inputDir.magnitude > 0.1f) ? acceleration : deceleration;
         moveVelocity = Vector3.Lerp(moveVelocity, targetVelocity, lerpSpeed * Time.deltaTime);
 
@@ -148,10 +197,15 @@ public class PlayerMovementThirdPerson : MonoBehaviour
         if (playerInputManager.GetJump() && characterController.isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+            // Animação de pulo
             if (animationController != null)
             {
                 animationController.TriggerJumpAnimation();
             }
+
+            // VFX de pulo
+            PlayJumpVFX();
         }
 
         if (characterController.isGrounded && velocity.y < 0) velocity.y = -2f;
@@ -160,7 +214,6 @@ public class PlayerMovementThirdPerson : MonoBehaviour
         // --- 5. Aplicação do Movimento ---
         Vector3 finalMove = moveVelocity + velocity;
 
-        // Adiciona deslizamento em rampas se necessário
         Vector3 slideDir;
         isSliding = CheckSlope(out slideDir);
         if (isSliding)

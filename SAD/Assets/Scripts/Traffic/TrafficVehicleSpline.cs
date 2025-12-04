@@ -56,6 +56,26 @@ public class TrafficVehicleSpline : MonoBehaviour
     [Tooltip("Velocidade usada para 'forçar a passagem' após o tempo de espera.")]
     public float forceProceedSpeed = 1.0f;
 
+    [Header("Anti-Travamento em Interseções")]
+    [Tooltip("Tempo máximo preso em uma interseção antes de forçar passagem (failsafe).")]
+    public float intersectionForceTimeout = 10f;
+    [Tooltip("Velocidade usada para forçar saída da interseção.")]
+    public float intersectionForceSpeed = 2f;
+
+    [Header("Suspensão (Inclinação ao Freiar)")]
+    [Tooltip("Ângulo máximo de inclinação para frente ao freiar (em graus).")]
+    public float maxBrakePitchAngle = 3f;
+    [Tooltip("Velocidade com que a inclinação acontece.")]
+    public float pitchLerpSpeed = 8f;
+
+    [Header("VFX: Fumaça de Frenagem")]
+    [Tooltip("GameObject do VFX de fumaça/trail para frenagem. Deixe vazio se não quiser usar.")]
+    public GameObject brakeSmokVFX;
+    [Tooltip("Desaceleração mínima para ativar a fumaça de frenagem.")]
+    public float brakeSmokMinDecel = 5f;
+    private ParticleSystem brakeSmokParticle;
+    private bool brakeSmokEmitting = false;
+
     [Header("Áudio")]
     [Tooltip("Tempo que o player precisa ficar na frente para a buzina começar.")]
     public float timeToStartHonking = 2.0f;
@@ -82,6 +102,9 @@ public class TrafficVehicleSpline : MonoBehaviour
     // Estado
     float distanceOnRoute;
     float currentSpeed;
+    float previousSpeed; // Para calcular a desaceleração
+    float currentDeceleration; // Desaceleração atual para uso em múltiplos lugares
+    float currentPitchAngle = 0f; // Ângulo atual de inclinação
     IntersectionZone currentIntersection;
     bool intersectionGranted;
     bool inStopRoutine;
@@ -89,6 +112,10 @@ public class TrafficVehicleSpline : MonoBehaviour
 
     BlockKind blockKind = BlockKind.None;
     float blockTimer = 0f;
+
+    // Timer para forçar saída de interseção
+    float intersectionStuckTimer = 0f;
+    bool forcingIntersectionExit = false;
 
     bool touchingSomething;
     bool touchingPlayerOrVehicle;
@@ -138,7 +165,19 @@ public class TrafficVehicleSpline : MonoBehaviour
             enabled = false; return;
         }
         distanceOnRoute = Mathf.Repeat(startDistance, route.totalLength);
+        previousSpeed = 0f;
         UpdateTransformImmediate();
+
+        // Inicializa o ParticleSystem da fumaça de frenagem
+        if (brakeSmokVFX != null)
+        {
+            brakeSmokParticle = brakeSmokVFX.GetComponentInChildren<ParticleSystem>();
+            if (brakeSmokParticle != null)
+            {
+                var emission = brakeSmokParticle.emission;
+                emission.enabled = false;
+            }
+        }
     }
 
     void FixedUpdate()
@@ -151,8 +190,11 @@ public class TrafficVehicleSpline : MonoBehaviour
         touchingSomething = false;
         touchingPlayerOrVehicle = false;
 
+        // --- Lógica de forçar saída de interseção (failsafe) ---
+        HandleIntersectionStuckTimer(dt);
+
         // 1) Interseções
-        if (obeyIntersections && currentIntersection != null && !intersectionGranted)
+        if (obeyIntersections && currentIntersection != null && !intersectionGranted && !forcingIntersectionExit)
         {
             desiredSpeed = 0f;
             SetBlock(BlockKind.Intersection, dt);
@@ -201,20 +243,29 @@ public class TrafficVehicleSpline : MonoBehaviour
 
         if (hit)
         {
-            SetBlock(hitKind, dt);
-            float gap = obsDist - desiredGap;
-
-            if (gap <= 0.01f)
+            // Se estamos forçando saída da interseção, ignoramos bloqueios de outros veículos
+            if (forcingIntersectionExit && hitKind == BlockKind.Vehicle)
             {
-                desiredSpeed = 0f;
+                // Continua forçando, mas com velocidade reduzida
+                desiredSpeed = Mathf.Min(desiredSpeed, intersectionForceSpeed);
             }
             else
             {
-                float safeDecelDist = Mathf.Clamp(gap, 0.5f, sensorLength);
-                float vAllowed = Mathf.Sqrt(2f * comfortableDeceleration * safeDecelDist);
-                if (obsSpeed >= 0f)
-                    vAllowed = Mathf.Min(vAllowed, obsSpeed);
-                desiredSpeed = Mathf.Min(desiredSpeed, vAllowed);
+                SetBlock(hitKind, dt);
+                float gap = obsDist - desiredGap;
+
+                if (gap <= 0.01f)
+                {
+                    desiredSpeed = 0f;
+                }
+                else
+                {
+                    float safeDecelDist = Mathf.Clamp(gap, 0.5f, sensorLength);
+                    float vAllowed = Mathf.Sqrt(2f * comfortableDeceleration * safeDecelDist);
+                    if (obsSpeed >= 0f)
+                        vAllowed = Mathf.Min(vAllowed, obsSpeed);
+                    desiredSpeed = Mathf.Min(desiredSpeed, vAllowed);
+                }
             }
         }
         else
@@ -225,8 +276,8 @@ public class TrafficVehicleSpline : MonoBehaviour
         // Lógica de Áudio para Buzina e Freio
         HandleAudio(hitKind, dt);
 
-        // 4) Evita empurrar fisicamente
-        if (touchingSomething && touchingPlayerOrVehicle)
+        // 4) Evita empurrar fisicamente (exceto se forçando saída)
+        if (touchingSomething && touchingPlayerOrVehicle && !forcingIntersectionExit)
         {
             desiredSpeed = 0f;
         }
@@ -263,15 +314,33 @@ public class TrafficVehicleSpline : MonoBehaviour
             desiredSpeed = Mathf.Max(desiredSpeed, forceProceedSpeed);
         }
 
+        // 7) Se estamos forçando saída da interseção, garante velocidade mínima
+        if (forcingIntersectionExit)
+        {
+            desiredSpeed = Mathf.Max(desiredSpeed, intersectionForceSpeed);
+        }
+
         // Integração da velocidade
         float accel = (desiredSpeed >= currentSpeed) ? acceleration : comfortableDeceleration;
         // Toca som de freio brusco
         if (desiredSpeed <= 0.001f && currentSpeed > 1.0f)
         {
             accel *= hardBrakeDamping;
-            // O som de freio agora é controlado em HandleAudio
         }
+
+        // Guarda velocidade anterior para calcular desaceleração
+        previousSpeed = currentSpeed;
         currentSpeed = Mathf.MoveTowards(currentSpeed, desiredSpeed, accel * dt);
+
+        // Calcula a desaceleração atual (usado para pitch e VFX)
+        currentDeceleration = Mathf.Max(0f, (previousSpeed - currentSpeed) / dt);
+
+        // --- Calcula inclinação de frenagem (suspensão) ---
+        float targetPitchAngle = CalculateBrakePitch();
+        currentPitchAngle = Mathf.Lerp(currentPitchAngle, targetPitchAngle, pitchLerpSpeed * dt);
+
+        // --- Controla VFX de fumaça de frenagem ---
+        HandleBrakeSmokeVFX();
 
         // Avança na rota
         distanceOnRoute += currentSpeed * dt;
@@ -299,7 +368,15 @@ public class TrafficVehicleSpline : MonoBehaviour
         Vector3 proposed = Vector3.Lerp(rb.position, finalPos, 1f - Mathf.Exp(-12f * Time.fixedDeltaTime));
         proposed = ResolveDepenetration(proposed, rb.rotation);
 
-        Quaternion targetRot = Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(forward, up), 1f - Mathf.Exp(-turnLerp * Time.fixedDeltaTime));
+        // Rotação base (direção da rota)
+        Quaternion baseRot = Quaternion.LookRotation(forward, up);
+
+        // Aplica inclinação de frenagem (pitch) no eixo local X
+        // Ângulo POSITIVO = frente para baixo (nariz mergulha)
+        Quaternion pitchRot = Quaternion.AngleAxis(currentPitchAngle, baseRot * Vector3.right);
+        Quaternion finalRot = pitchRot * baseRot;
+
+        Quaternion targetRot = Quaternion.Slerp(rb.rotation, finalRot, 1f - Mathf.Exp(-turnLerp * Time.fixedDeltaTime));
         rb.MoveRotation(targetRot);
         rb.MovePosition(proposed);
 
@@ -321,9 +398,70 @@ public class TrafficVehicleSpline : MonoBehaviour
         }
     }
 
+    private float CalculateBrakePitch()
+    {
+        // Normaliza a desaceleração em relação à desaceleração máxima esperada
+        float maxDecel = comfortableDeceleration * hardBrakeDamping;
+        float decelRatio = Mathf.Clamp01(currentDeceleration / maxDecel);
+
+        // Se está acelerando ou em velocidade constante, volta ao normal
+        if (currentDeceleration <= 0.1f)
+        {
+            return 0f;
+        }
+
+        // Quanto mais forte a frenagem, maior a inclinação para frente (ângulo positivo = frente para baixo)
+        return maxBrakePitchAngle * decelRatio;
+    }
+
+    private void HandleBrakeSmokeVFX()
+    {
+        if (brakeSmokParticle == null) return;
+
+        // Ativa fumaça se está freando forte o suficiente
+        bool shouldEmit = currentDeceleration >= brakeSmokMinDecel;
+
+        if (shouldEmit != brakeSmokEmitting)
+        {
+            var emission = brakeSmokParticle.emission;
+            emission.enabled = shouldEmit;
+            brakeSmokEmitting = shouldEmit;
+        }
+    }
+
+    private void HandleIntersectionStuckTimer(float dt)
+    {
+        // Se está dentro de uma interseção e parado
+        if (currentIntersection != null && currentSpeed < minSpeedToConsiderMoving)
+        {
+            intersectionStuckTimer += dt;
+
+            // Se passou do timeout, força a saída
+            if (intersectionStuckTimer >= intersectionForceTimeout && !forcingIntersectionExit)
+            {
+                forcingIntersectionExit = true;
+                Debug.Log($"{name}: Forçando saída da interseção após {intersectionForceTimeout}s preso.");
+            }
+        }
+        else
+        {
+            // Se saiu da interseção ou está se movendo, reseta
+            if (currentIntersection == null)
+            {
+                intersectionStuckTimer = 0f;
+                forcingIntersectionExit = false;
+            }
+            else if (currentSpeed >= minSpeedToConsiderMoving)
+            {
+                // Está se movendo dentro da interseção, reseta o timer mas mantém o estado
+                intersectionStuckTimer = 0f;
+            }
+        }
+    }
+
     private void HandleAudio(BlockKind currentHit, float dt)
     {
-        
+
         bool isCurrentlyBrakingForPlayer = currentHit == BlockKind.Player && currentSpeed > 1.0f && IsBrakingHard();
         if (isCurrentlyBrakingForPlayer)
         {
@@ -339,7 +477,7 @@ public class TrafficVehicleSpline : MonoBehaviour
             isBrakingAudioPlayed = false;
         }
 
-        
+
         // Se o veículo está parado
         if (currentSpeed < minSpeedToConsiderMoving)
         {
@@ -520,6 +658,9 @@ public class TrafficVehicleSpline : MonoBehaviour
         {
             currentIntersection = null;
             intersectionGranted = false;
+            // Reseta o estado de forçar saída ao sair da interseção
+            intersectionStuckTimer = 0f;
+            forcingIntersectionExit = false;
         }
     }
 

@@ -56,7 +56,7 @@ public class DeliveryController : MonoBehaviour
     [SerializeField] private float bobbingHeight = 0.25f;
     [Tooltip("Velocidade da rotação no eixo Y.")]
     [SerializeField] private float rotationSpeed = 50f;
-
+    public GameObject deliveryVFX;
     [Header("Mailboxes Values")]
     public List<Mailbox> mailboxesArea1 = new List<Mailbox>();
     public List<Mailbox> mailboxesArea2 = new List<Mailbox>();
@@ -299,7 +299,30 @@ public class DeliveryController : MonoBehaviour
             if (AudioManager.Instance != null)
                 AudioManager.Instance.PlaySFX("DeliverySuccess");
 
+            // Entrega visual
             DeliverPackage(mailboxes[boxNumber].mailbox.transform);
+
+            // Balança levemente a caixa de correio no eixo Z
+            var mailboxTransform = mailboxes[boxNumber].mailbox.transform;
+            PlayMailboxSway(mailboxTransform);
+            // 3. Instancia o VFX acima da mailbox, virado para cima
+            if (deliveryVFX != null)
+            {
+
+                // um pouquinho mais baixo
+                const float vfxHeightOffset = 0.75f;
+
+                // usa o eixo Y mundial para evitar saídas laterais
+                Vector3 spawnPos = mailboxTransform.position + Vector3.up * vfxHeightOffset;
+
+                GameObject vfx = Instantiate(deliveryVFX, spawnPos, Quaternion.identity);
+
+                // opcional: parentear para acompanhar a caixa
+                vfx.transform.SetParent(mailboxTransform, true);
+
+                // garante cone para cima (se seu cone usa Z como eixo, troque por forward)
+                 vfx.transform.forward = Vector3.up;
+            }
             int deliveryScore = (int)mailboxDistance * scoreDistanceMultiplier + baseDeliveryScoreValue;
             scoreController.ChangeScore(deliveryScore);
             Debug.Log($"Distance: {(int)mailboxDistance} | Score: {deliveryScore}");
@@ -319,6 +342,57 @@ public class DeliveryController : MonoBehaviour
         minimapTargetIndicator.target = null;
         isDelivering = false;
         isFailed = false;
+    }
+
+    // Pequena animação de balanço em Z (entre -5 e 5 graus) com amortecimento
+    private void PlayMailboxSway(Transform mailboxTransform)
+    {
+        if (mailboxTransform == null) return;
+        // inicia uma corrotina local para a animação
+        StartCoroutine(MailboxSwayCoroutine(mailboxTransform));
+    }
+
+    private IEnumerator MailboxSwayCoroutine(Transform mailboxTransform)
+    {
+        // guarda rotação inicial
+        Quaternion startRot = mailboxTransform.localRotation;
+
+        // escolhe direção inicial (-5 ou 5)
+        float maxAngle = 5f;
+        float firstAngle = Random.value < 0.5f ? -maxAngle : maxAngle;
+
+        // sequência curta: vai ao primeiro ângulo, passa levemente para o outro lado e volta ao original
+        // tempos pequenos para parecer um balanço
+        float t1 = 0.12f;  // ida
+        float t2 = 0.10f;  // retorno para o outro lado (reduzido)
+        float t3 = 0.16f;  // volta ao original com amortecimento
+
+        // etapa 1: até firstAngle
+        yield return SwayStep(mailboxTransform, startRot, startRot * Quaternion.Euler(0f, 0f, firstAngle), t1);
+
+        // etapa 2: para o lado oposto com menor amplitude (amortecimento)
+        float secondAngle = -firstAngle * 0.6f;
+        yield return SwayStep(mailboxTransform, mailboxTransform.localRotation, startRot * Quaternion.Euler(0f, 0f, secondAngle), t2);
+
+        // etapa 3: volta ao original
+        yield return SwayStep(mailboxTransform, mailboxTransform.localRotation, startRot, t3);
+
+        // garante retorno exato
+        mailboxTransform.localRotation = startRot;
+    }
+
+    private IEnumerator SwayStep(Transform tr, Quaternion from, Quaternion to, float duration)
+    {
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / duration);
+            // ease in-out suave
+            k = k * k * (3f - 2f * k);
+            tr.localRotation = Quaternion.Slerp(from, to, k);
+            yield return null;
+        }
     }
 
     public void FailedDelivery()
