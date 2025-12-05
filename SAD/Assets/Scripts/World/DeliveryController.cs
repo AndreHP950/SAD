@@ -354,46 +354,74 @@ public class DeliveryController : MonoBehaviour
 
     private IEnumerator MailboxSwayCoroutine(Transform mailboxTransform)
     {
-        // guarda rotação inicial
+        // guarda rotação e escala iniciais
         Quaternion startRot = mailboxTransform.localRotation;
+        Vector3 startScale = mailboxTransform.localScale;
+        Vector3 targetScale = startScale * 1.15f; // Aumenta a escala em 15%
 
         // escolhe direção inicial (-5 ou 5)
         float maxAngle = 5f;
         float firstAngle = Random.value < 0.5f ? -maxAngle : maxAngle;
 
-        // sequência curta: vai ao primeiro ângulo, passa levemente para o outro lado e volta ao original
         // tempos pequenos para parecer um balanço
-        float t1 = 0.12f;  // ida
-        float t2 = 0.10f;  // retorno para o outro lado (reduzido)
-        float t3 = 0.16f;  // volta ao original com amortecimento
+        float t1 = 0.12f;  // ida (balanço e escala para cima)
+        float t2 = 0.10f;  // retorno para o outro lado
+        float t3 = 0.25f;  // volta ao original com amortecimento (escala para baixo)
 
-        // etapa 1: até firstAngle
-        yield return SwayStep(mailboxTransform, startRot, startRot * Quaternion.Euler(0f, 0f, firstAngle), t1);
+        // --- Etapa 1: Balanço inicial e aumento de escala ---
+        float timer = 0f;
+        Quaternion fromRot = startRot;
+        Quaternion toRot = startRot * Quaternion.Euler(0f, 0f, firstAngle);
+        Vector3 fromScale = startScale;
 
-        // etapa 2: para o lado oposto com menor amplitude (amortecimento)
+        while (timer < t1)
+        {
+            timer += Time.deltaTime;
+            float k = Mathf.Clamp01(timer / t1);
+            k = k * k * (3f - 2f * k); // Ease in-out
+
+            mailboxTransform.localRotation = Quaternion.Slerp(fromRot, toRot, k);
+            mailboxTransform.localScale = Vector3.Lerp(fromScale, targetScale, k);
+            yield return null;
+        }
+
+        // --- Etapa 2: Balanço para o lado oposto ---
+        timer = 0f;
+        fromRot = mailboxTransform.localRotation;
         float secondAngle = -firstAngle * 0.6f;
-        yield return SwayStep(mailboxTransform, mailboxTransform.localRotation, startRot * Quaternion.Euler(0f, 0f, secondAngle), t2);
+        toRot = startRot * Quaternion.Euler(0f, 0f, secondAngle);
 
-        // etapa 3: volta ao original
-        yield return SwayStep(mailboxTransform, mailboxTransform.localRotation, startRot, t3);
+        while (timer < t2)
+        {
+            timer += Time.deltaTime;
+            float k = Mathf.Clamp01(timer / t2);
+            k = k * k * (3f - 2f * k);
+
+            mailboxTransform.localRotation = Quaternion.Slerp(fromRot, toRot, k);
+            yield return null;
+        }
+
+        // --- Etapa 3: Volta à rotação e escala originais ---
+        timer = 0f;
+        fromRot = mailboxTransform.localRotation;
+        fromScale = mailboxTransform.localScale;
+
+        while (timer < t3)
+        {
+            timer += Time.deltaTime;
+            float k = Mathf.Clamp01(timer / t3);
+            k = k * k * (3f - 2f * k);
+
+            mailboxTransform.localRotation = Quaternion.Slerp(fromRot, startRot, k);
+            mailboxTransform.localScale = Vector3.Lerp(fromScale, startScale, k);
+            yield return null;
+        }
 
         // garante retorno exato
         mailboxTransform.localRotation = startRot;
+        mailboxTransform.localScale = startScale;
     }
 
-    private IEnumerator SwayStep(Transform tr, Quaternion from, Quaternion to, float duration)
-    {
-        float t = 0f;
-        while (t < duration)
-        {
-            t += Time.deltaTime;
-            float k = Mathf.Clamp01(t / duration);
-            // ease in-out suave
-            k = k * k * (3f - 2f * k);
-            tr.localRotation = Quaternion.Slerp(from, to, k);
-            yield return null;
-        }
-    }
 
     public void FailedDelivery()
     {

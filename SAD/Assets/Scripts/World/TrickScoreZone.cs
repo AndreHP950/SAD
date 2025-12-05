@@ -20,6 +20,10 @@ public class TrickScoreZone : MonoBehaviour
     [Tooltip("Tempo (segundos) para rearme após pontuar (quando onlyOnce = false).")]
     public float rearmDelay = 2f;
 
+    [Header("Feedback Visual")]
+    [Tooltip("ParticleSystem do VFX para tocar quando o jogador pontua. Deixe vazio se não houver.")]
+    public ParticleSystem scoreVFX;
+
     // Interno
     private bool armed = true;
     private float armReadyTime = 0f;
@@ -29,6 +33,13 @@ public class TrickScoreZone : MonoBehaviour
     {
         SetupTriggerCollider();
         EnsureScoreControllerBound();
+
+        // Garante que o VFX não comece tocando sozinho
+        if (scoreVFX != null)
+        {
+            scoreVFX.gameObject.SetActive(true); // Garante que o objeto está ativo
+            scoreVFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); // Para e limpa partículas
+        }
     }
 
     void OnValidate()
@@ -98,6 +109,12 @@ public class TrickScoreZone : MonoBehaviour
     void AddScore()
     {
         if (scoreAmount == 0) return;
+
+        // Toca o VFX antes de qualquer outra coisa para feedback imediato
+        if (scoreVFX != null)
+        {
+            scoreVFX.Play();
+        }
 
         if (scoreController == null)
             EnsureScoreControllerBound();

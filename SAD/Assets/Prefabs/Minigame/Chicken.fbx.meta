@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 08c721475c61d3a44af3446cc5874dbc
+guid: 04aa5d08afbfb984b93f69ab0df2e9c5
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -8,32 +8,17 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Clothes
-    second: {fileID: 2100000, guid: a88055a95641efc48b66908de39960eb, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DogMat
-    second: {fileID: 2100000, guid: a1440740259059245a1ff426f5efffd1, type: 2}
+    second: {fileID: 2100000, guid: e9b4630f9bc98e84a9c40b33fc79db18, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Metal
-    second: {fileID: 2100000, guid: 31dee1179f33e8a4a9e6905d36f3c950, type: 2}
+    second: {fileID: 2100000, guid: f295ec2dba80ac346bccb2be87822982, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Skin
-    second: {fileID: 2100000, guid: 366a3e64624f2c64996d609d505470c2, type: 2}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: DogColor
-    second: {fileID: 2800000, guid: 2270c1cef2951be4a8ffd54daa1db924, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: DogRough
-    second: {fileID: 2800000, guid: a014a807892150a4099a7f0c8c7f8ecf, type: 3}
+    second: {fileID: 2100000, guid: 75fe25f7f913023408df3b8c163812e2, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -61,40 +46,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: DogRig|ENTREGA_Collect
-      takeName: DogRig|ENTREGA_Collect
-      internalID: 6142535245585020716
+      name: ChickenRig|ENTREGA_Interaction
+      takeName: ChickenRig|ENTREGA_Interaction
+      internalID: -6592461850386349105
       firstFrame: 0
-      lastFrame: 60
-      wrapMode: 0
-      orientationOffsetY: 0
-      level: 0
-      cycleOffset: 0
-      loop: 0
-      hasAdditiveReferencePose: 0
-      loopTime: 0
-      loopBlend: 0
-      loopBlendOrientation: 0
-      loopBlendPositionY: 0
-      loopBlendPositionXZ: 0
-      keepOriginalOrientation: 0
-      keepOriginalPositionY: 1
-      keepOriginalPositionXZ: 0
-      heightFromFeet: 0
-      mirror: 0
-      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
-      curves: []
-      events: []
-      transformMask: []
-      maskType: 3
-      maskSource: {instanceID: 0}
-      additiveReferencePoseFrame: 0
-    - serializedVersion: 16
-      name: DogRig|ENTREGA_Idle
-      takeName: DogRig|ENTREGA_Idle
-      internalID: -2722631806811954220
-      firstFrame: 0
-      lastFrame: 250
+      lastFrame: 199
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -119,47 +75,18 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: DogRig|Jump
-      takeName: DogRig|Jump
-      internalID: -9102966720952503435
+      name: ChickenRig|ENTREGA_Run
+      takeName: ChickenRig|ENTREGA_Run
+      internalID: -43828060757417042
       firstFrame: 0
-      lastFrame: 140
+      lastFrame: 255
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
       cycleOffset: 0
       loop: 0
       hasAdditiveReferencePose: 0
-      loopTime: 0
-      loopBlend: 0
-      loopBlendOrientation: 0
-      loopBlendPositionY: 0
-      loopBlendPositionXZ: 0
-      keepOriginalOrientation: 0
-      keepOriginalPositionY: 1
-      keepOriginalPositionXZ: 0
-      heightFromFeet: 0
-      mirror: 0
-      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
-      curves: []
-      events: []
-      transformMask: []
-      maskType: 3
-      maskSource: {instanceID: 0}
-      additiveReferencePoseFrame: 0
-    - serializedVersion: 16
-      name: DogRig|Collect_Left
-      takeName: DogRig|Collect_Left
-      internalID: 5116505429813183439
-      firstFrame: 0
-      lastFrame: 60
-      wrapMode: 0
-      orientationOffsetY: 0
-      level: 0
-      cycleOffset: 0
-      loop: 0
-      hasAdditiveReferencePose: 0
-      loopTime: 0
+      loopTime: 1
       loopBlend: 0
       loopBlendOrientation: 0
       loopBlendPositionY: 0
@@ -179,7 +106,7 @@ ModelImporter:
     isReadable: 0
   meshes:
     lODScreenPercentages: []
-    globalScale: 1
+    globalScale: 3.5
     meshCompression: 0
     addColliders: 0
     useSRGBMaterialColor: 1
@@ -234,7 +161,7 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
-    globalScale: 1
+    globalScale: 3.5
     rootMotionBoneName: 
     hasTranslationDoF: 0
     hasExtraRoot: 0

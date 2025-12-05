@@ -22,6 +22,12 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private float collectMinInterval = 0.15f; // em segundos
     private float lastCollectTime = -999f;
 
+    [Header("Idle Detection")]
+    [Tooltip("Velocidade abaixo da qual o personagem é considerado parado.")]
+    [SerializeField] private float idleThreshold = 0.1f;
+    [Tooltip("Suavização da transição do parâmetro Speed.")]
+    [SerializeField] private float speedDampTime = 0.1f;
+
     void Awake()
     {
         animator = GetComponent<Animator>();
@@ -38,10 +44,21 @@ public class PlayerAnimationController : MonoBehaviour
 
     void Update()
     {
+        // Calcula velocidade horizontal
         Vector3 hv = new Vector3(characterController.velocity.x, 0, characterController.velocity.z);
-        float normalizedSpeed = playerMovement.speed > 0 ? hv.magnitude / playerMovement.speed : 0f;
+        float currentSpeed = hv.magnitude;
 
-        animator.SetFloat(speedHash, normalizedSpeed);
+        // Normaliza a velocidade (0 = parado, 1 = velocidade máxima)
+        float normalizedSpeed = playerMovement.speed > 0 ? currentSpeed / playerMovement.speed : 0f;
+
+        // Se abaixo do threshold, força para 0 (idle)
+        if (currentSpeed < idleThreshold)
+        {
+            normalizedSpeed = 0f;
+        }
+
+        // Usa SetFloat com dampTime para transição suave
+        animator.SetFloat(speedHash, normalizedSpeed, speedDampTime, Time.deltaTime);
         animator.SetBool(isGroundedHash, characterController.isGrounded);
     }
 

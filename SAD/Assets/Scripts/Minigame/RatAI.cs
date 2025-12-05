@@ -27,6 +27,17 @@ public class ChasableAI : MonoBehaviour
     int currentWaypoint;
     MinigameController owner;
 
+    // Referência ao controlador de animação (opcional - funciona para galinha, rato, etc.)
+    private ChickenAnimationController animationController;
+
+    void Awake()
+    {
+        // Tenta encontrar o controlador de animação no mesmo objeto ou nos filhos
+        animationController = GetComponent<ChickenAnimationController>();
+        if (animationController == null)
+            animationController = GetComponentInChildren<ChickenAnimationController>();
+    }
+
     void OnDrawGizmos()
     {
         if (waypoints == null || waypoints.Length == 0) return;
@@ -56,7 +67,7 @@ public class ChasableAI : MonoBehaviour
     {
         if (waypoints == null || waypoints.Length == 0)
         {
-            Debug.LogWarning($"[RatAI] nenhum waypoint configurado em {name}");
+            Debug.LogWarning($"[ChasableAI] nenhum waypoint configurado em {name}");
             return;
         }
 
@@ -67,6 +78,10 @@ public class ChasableAI : MonoBehaviour
         // Posiciona no primeiro waypoint
         if (waypoints[0] != null)
             transform.position = GetGroundPosition(waypoints[0].position);
+
+        // Ativa animação de corrida
+        if (animationController != null)
+            animationController.StartRunning();
     }
 
     void FixedUpdate()
@@ -123,31 +138,47 @@ public class ChasableAI : MonoBehaviour
     void RouteFinished()
     {
         active = false;
-        
+
+        // Para animação de corrida
+        if (animationController != null)
+            animationController.StopRunning();
+
         // Notifica área de trigger
         var trigger = GetComponentInChildren<ChaseMinigameTrigger>();
         if (trigger != null)
             trigger.OnMinigameEnded();
-            
+
         if (owner != null)
             owner.NotifyTargetEscaped(this);
 
-        Destroy(gameObject);
+        if (destroyOnFinish)
+            Destroy(gameObject);
     }
 
     public void StopRunning()
     {
         active = false;
+
+        // Para animação de corrida
+        if (animationController != null)
+            animationController.StopRunning();
     }
 
     public void OnCaught()
     {
+        active = false;
+
+        // Para animação de corrida
+        if (animationController != null)
+            animationController.StopRunning();
+
         // Notifica área de trigger
         var trigger = GetComponentInChildren<ChaseMinigameTrigger>();
         if (trigger != null)
             trigger.OnMinigameEnded();
-            
-        Destroy(gameObject);
+
+        if (destroyOnFinish)
+            Destroy(gameObject);
     }
 
     public float DistanceToPoint(Vector3 worldPos)
