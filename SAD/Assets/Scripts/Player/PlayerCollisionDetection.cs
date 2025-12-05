@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.VisualScripting;
@@ -14,6 +15,13 @@ public class AreaCollectables
 public class PlayerCollisionDetection : MonoBehaviour
 {
     [SerializeField] DeliveryController deliveryController;
+    [Header("VFX")]
+    [Tooltip("VFX que toca quando o jogador encosta na água.")]
+    [SerializeField] private GameObject waterSplashVFX;
+    private ParticleSystem water;
+    [Tooltip("Tempo em segundos antes do jogador reaparecer após tocar na água.")]
+    [SerializeField] private float waterRespawnDelay = 1f;
+
     PlayerRespawn playerRespawn;
     private PlayerAnimationController animationController; // Referência para a animação
 
@@ -24,6 +32,7 @@ public class PlayerCollisionDetection : MonoBehaviour
     private int area2Collectables = 0;
     private int area3Collectables = 0;
     private int currentAreaCollected = 0;
+    private bool isRespawningFromWater = false;
 
     private void Start()
     {
@@ -58,11 +67,8 @@ public class PlayerCollisionDetection : MonoBehaviour
                 }
                 break;
             case "Water":
-                if (AudioManager.Instance != null)
-                {
-                    AudioManager.Instance.PlaySFX("WaterSplash");
-                }
-                playerRespawn.RespawnPlayer();
+                if (isRespawningFromWater) return;
+                StartCoroutine(WaterRespawnRoutine());
                 break;
 
             case "AreaCollectable":
@@ -117,6 +123,30 @@ public class PlayerCollisionDetection : MonoBehaviour
         }
     }
 
+    private IEnumerator WaterRespawnRoutine()
+    {
+        isRespawningFromWater = true;
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX("WaterSplash");
+        }
+        // Inicializa o ParticleSystem do pulo
+        if (waterSplashVFX != null)
+        {
+            water = waterSplashVFX.GetComponentInChildren<ParticleSystem>();
+        }
+        if (waterSplashVFX != null)
+        {
+            water.Play();
+        }
+
+        yield return new WaitForSeconds(waterRespawnDelay);
+
+        playerRespawn.RespawnPlayer();
+        isRespawningFromWater = false;
+    }
+
     private void OnTriggerExit(Collider other)
     {
         if (other.transform.CompareTag("Mailbox")) mailboxRange = false;
@@ -143,7 +173,7 @@ public class PlayerCollisionDetection : MonoBehaviour
             switch (thisArea)
             {
                 case "Area 1":
-                    areaCollectablesList.Add(new AreaCollectables { areaCollectable = a , area = 1});
+                    areaCollectablesList.Add(new AreaCollectables { areaCollectable = a, area = 1 });
                     area1Collectables++;
                     break;
                 case "Area 2":
