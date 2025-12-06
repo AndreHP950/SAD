@@ -27,25 +27,22 @@ public class TrickScoreZone : MonoBehaviour
     // Interno
     private bool armed = true;
     private float armReadyTime = 0f;
-    private BoxCollider triggerCollider; // Referência para nosso collider de trigger específico
+    private BoxCollider triggerCollider;
 
     void Awake()
     {
         SetupTriggerCollider();
         EnsureScoreControllerBound();
 
-        // Garante que o VFX não comece tocando sozinho
         if (scoreVFX != null)
         {
-            scoreVFX.gameObject.SetActive(true); // Garante que o objeto está ativo
-            scoreVFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); // Para e limpa partículas
+            scoreVFX.gameObject.SetActive(true);
+            scoreVFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
     }
 
     void OnValidate()
     {
-        // Isso permite que o gizmo e o collider se atualizem no editor
-        // quando você muda os valores de triggerCenter e triggerSize.
         SetupTriggerCollider();
     }
 
@@ -54,7 +51,6 @@ public class TrickScoreZone : MonoBehaviour
         BoxCollider[] colliders = GetComponents<BoxCollider>();
         triggerCollider = null;
 
-        // 1. Tenta encontrar um BoxCollider que já esteja configurado como trigger.
         foreach (var col in colliders)
         {
             if (col.isTrigger)
@@ -64,21 +60,18 @@ public class TrickScoreZone : MonoBehaviour
             }
         }
 
-        // 2. Se nenhum for encontrado, adiciona um novo para não mexer no collider físico.
         if (triggerCollider == null)
         {
             triggerCollider = gameObject.AddComponent<BoxCollider>();
             triggerCollider.isTrigger = true;
         }
 
-        // 3. Aplica as propriedades do script ao collider de trigger.
         triggerCollider.center = triggerCenter;
         triggerCollider.size = triggerSize;
     }
 
     void Update()
     {
-        // Rearme por tempo (usa unscaled para funcionar mesmo em pausa)
         if (!armed && !onlyOnce && Time.unscaledTime >= armReadyTime)
         {
             armed = true;
@@ -87,7 +80,6 @@ public class TrickScoreZone : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // Verifica se o objeto que entrou é o jogador e se a zona está armada
         if (armed && other.CompareTag("Player"))
         {
             AddScore();
@@ -95,7 +87,6 @@ public class TrickScoreZone : MonoBehaviour
             if (onlyOnce)
             {
                 armed = false;
-                // Desativa apenas o collider de trigger para não ser acionado novamente
                 if (triggerCollider != null) triggerCollider.enabled = false;
             }
             else
@@ -110,7 +101,6 @@ public class TrickScoreZone : MonoBehaviour
     {
         if (scoreAmount == 0) return;
 
-        // Toca o VFX antes de qualquer outra coisa para feedback imediato
         if (scoreVFX != null)
         {
             scoreVFX.Play();
@@ -124,6 +114,12 @@ public class TrickScoreZone : MonoBehaviour
             scoreController.ChangeScore(scoreAmount);
             if (AudioManager.Instance != null)
                 AudioManager.Instance.PlaySFX("DeliverySuccess");
+
+            // Notifica o sistema de instruções
+            if (InstructionalTextController.Instance != null)
+            {
+                InstructionalTextController.Instance.NotifyTrickScoreCompleted();
+            }
         }
         else
         {
@@ -149,7 +145,6 @@ public class TrickScoreZone : MonoBehaviour
 
     void DrawGizmo()
     {
-        // Garante que temos uma referência, mesmo no modo de edição
         if (triggerCollider == null)
         {
             SetupTriggerCollider();
@@ -160,7 +155,7 @@ public class TrickScoreZone : MonoBehaviour
 
         Gizmos.matrix = transform.localToWorldMatrix;
         Gizmos.color = armed ? new Color(0.2f, 0.9f, 0.3f, 0.25f) : new Color(0.9f, 0.2f, 0.2f, 0.25f);
-        Gizmos.DrawCube(triggerCenter, triggerSize); // Usa as variáveis do script
+        Gizmos.DrawCube(triggerCenter, triggerSize);
         Gizmos.color = armed ? new Color(0.2f, 0.9f, 0.3f, 0.9f) : new Color(0.9f, 0.2f, 0.2f, 0.9f);
         Gizmos.DrawWireCube(triggerCenter, triggerSize);
 

@@ -288,6 +288,12 @@ public class DeliveryController : MonoBehaviour
 
             minimapTargetIndicator.target = mailboxes[mailboxes[boxNumber].target].mailbox.transform;
             isDelivering = true;
+
+            // Notifica o sistema de instruções que um pacote foi coletado
+            if (InstructionalTextController.Instance != null)
+            {
+                InstructionalTextController.Instance.NotifyPackagePickedUp();
+            }
         }
     }
 
@@ -326,6 +332,12 @@ public class DeliveryController : MonoBehaviour
             int deliveryScore = (int)mailboxDistance * scoreDistanceMultiplier + baseDeliveryScoreValue;
             scoreController.ChangeScore(deliveryScore);
             Debug.Log($"Distance: {(int)mailboxDistance} | Score: {deliveryScore}");
+
+            // Notifica o sistema de instruções que uma entrega foi concluída
+            if (InstructionalTextController.Instance != null)
+            {
+                InstructionalTextController.Instance.NotifyDeliveryCompleted();
+            }
         }
         else
         {
@@ -543,6 +555,12 @@ public class DeliveryController : MonoBehaviour
         }
 
         startChangingArea = false;
+
+        // Notifica o sistema de instruções que a área foi desbloqueada
+        if (InstructionalTextController.Instance != null)
+        {
+            InstructionalTextController.Instance.NotifyAreaUnlocked();
+        }
     }
 
     private void StartAreaChange(int nextArea)
@@ -587,5 +605,11 @@ public class DeliveryController : MonoBehaviour
 
         minimapTargetIndicator.target = null;
         areaStartingPoints[nextAreaValue].gameObject.SetActive(false);
+
+        // Notifica que o jogador chegou na nova área
+        if (InstructionalTextController.Instance != null)
+        {
+            InstructionalTextController.Instance.NotifyArrivedAtNewArea();
+        }
     }
 }

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Cinemachine;
 using TMPro;
+using UnityEngine.EventSystems;
 
 public class MinigameController : MonoBehaviour
 {
@@ -22,13 +23,22 @@ public class MinigameController : MonoBehaviour
     [Tooltip("Escala máxima do pulso.")]
     [SerializeField] private float alertMaxScale = 1.05f;
 
-
     [Header("First-Person (FPV)")]
     [Tooltip("Se quiser controlar a vcam em vez de parentar a Main Camera, arraste-a aqui.")]
     public CinemachineCamera virtualCamera;
     public float fpvFOV = 90f;
     public Vector3 fpvLocalPositionOffset = Vector3.zero;
     public Vector3 fpvLocalEulerOffset = Vector3.zero;
+
+    [Header("FPV Camera Control")]
+    [Tooltip("Sensibilidade do mouse para rotação da câmera.")]
+    public float mouseSensitivity = 2f;
+    [Tooltip("Sensibilidade do toque para rotação da câmera.")]
+    public float touchSensitivity = 0.15f;
+    [Tooltip("Limite de rotação vertical (pitch) para cima.")]
+    public float maxPitch = 60f;
+    [Tooltip("Limite de rotação vertical (pitch) para baixo.")]
+    public float minPitch = -60f;
 
     [Header("Catch / Reward")]
     public float catchDistance = 1.2f;
@@ -55,7 +65,7 @@ public class MinigameController : MonoBehaviour
 
     ChasableAI activeTarget;
     float timer;
-    float catchCooldown; // NOVO: Timer para o cooldown de captura
+    float catchCooldown;
 
     // Referências para o texto de alerta
     private TextMeshProUGUI minigameAlertText;
@@ -64,6 +74,10 @@ public class MinigameController : MonoBehaviour
     // player renderers storage
     Renderer[] playerRenderers;
     bool[] playerRenderersPrevState;
+
+    // Controle de rotação FPV
+    private float currentPitch = 0f;
+    private float currentYaw = 0f;
 
     void Start()
     {
@@ -115,11 +129,16 @@ public class MinigameController : MonoBehaviour
 
         // Força player a olhar para o rato
         Vector3 directionToRat = (activeTarget.transform.position - playerTransform.position);
-        directionToRat.y = 0; // mantém rotação apenas no plano horizontal
+        directionToRat.y = 0;
         if (directionToRat.sqrMagnitude > 0.001f)
         {
             playerTransform.rotation = Quaternion.LookRotation(directionToRat.normalized, Vector3.up);
         }
+
+        // Inicializa os ângulos de rotação baseado na rotação atual do player
+        currentYaw = playerTransform.eulerAngles.y;
+        currentPitch = 0f;
+
         // salva estado da Main Camera
         if (mainCam != null)
         {
@@ -135,7 +154,6 @@ public class MinigameController : MonoBehaviour
 
         if (virtualCamera != null)
         {
-            // desative para impedir override da main camera (vamos parentar)
             virtualCamera.enabled = false;
         }
 
@@ -195,14 +213,12 @@ public class MinigameController : MonoBehaviour
 
         // start timer e cooldown
         timer = chaseDuration;
-        catchCooldown = initialCatchCooldown; // Inicia o cooldown de captura
+        catchCooldown = initialCatchCooldown;
         state = MinigameState.Running;
 
-        if (!GameManager.instance.isMobile)
-        {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-        }
+        // Esconde e trava o cursor (tanto mobile quanto desktop)
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
@@ -214,6 +230,9 @@ public class MinigameController : MonoBehaviour
         {
             catchCooldown -= Time.deltaTime;
         }
+
+        // Controle de câmera FPV
+        HandleFPVCameraRotation();
 
         // Animação de pulso da vinheta
         if (vignetteImage != null)
@@ -248,6 +267,56 @@ public class MinigameController : MonoBehaviour
                 EndChase(true);
             }
         }
+    }
+
+    private void HandleFPVCameraRotation()
+    {
+        if (playerTransform == null || mainCam == null) return;
+
+        float mouseX = 0f;
+        float mouseY = 0f;
+
+        bool isMobile = GameManager.instance != null && GameManager.instance.isMobile;
+
+        if (isMobile)
+        {
+            // Controle por toque
+            if (Input.touchCount > 0)
+            {
+                for (int i = 0; i < Input.touchCount; i++)
+                {
+                    Touch touch = Input.GetTouch(i);
+
+                    // Ignora toques em elementos de UI
+                    if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+                        continue;
+
+                    if (touch.phase == TouchPhase.Moved)
+                    {
+                        mouseX = touch.deltaPosition.x * touchSensitivity;
+                        mouseY = touch.deltaPosition.y * touchSensitivity;
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Controle por mouse
+            mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+            mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+        }
+
+        // Atualiza os ângulos
+        currentYaw += mouseX;
+        currentPitch -= mouseY;
+        currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
+
+        // Aplica rotação horizontal ao player (yaw)
+        playerTransform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
+
+        // Aplica rotação vertical à câmera (pitch)
+        mainCam.transform.localRotation = Quaternion.Euler(currentPitch + fpvLocalEulerOffset.x, fpvLocalEulerOffset.y, fpvLocalEulerOffset.z);
     }
 
     // chamado pelo RatAI quando o rato termina a spline

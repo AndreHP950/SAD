@@ -68,6 +68,12 @@ public class SpeedBoostPickup : MonoBehaviour
             AudioManager.Instance.PlaySFX("PowerUP");
         }
 
+        // Notifica o sistema de instruções
+        if (InstructionalTextController.Instance != null)
+        {
+            InstructionalTextController.Instance.NotifySpeedBoostCollected();
+        }
+
         if (destroyOnPickup) Destroy(gameObject);
         else gameObject.SetActive(false);
     }

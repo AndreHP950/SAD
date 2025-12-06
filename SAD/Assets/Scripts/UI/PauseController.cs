@@ -6,7 +6,6 @@ using UnityEngine.UI;
 
 public class PauseController : MonoBehaviour
 {
-
     //public GameObject pauseMenu;
     public bool IsPaused => Time.timeScale < 0.1f;
     bool isCooldown = false;
@@ -17,7 +16,6 @@ public class PauseController : MonoBehaviour
     Transform gameTime;
     Transform score;
     Transform mobileUI;
-
 
     public GameObject[] menusInPause;
 
@@ -31,8 +29,13 @@ public class PauseController : MonoBehaviour
         gameTime = transform.Find("GameUI/GameTime");
         score = transform.Find("GameUI/Score");
         mobileUI = transform.Find("GameUI/MobileUI");
-    }
 
+        // Esconde o cursor no início do jogo
+        if (SceneManager.GetActiveScene().name == "Game")
+        {
+            HideCursor();
+        }
+    }
 
     public void Update()
     {
@@ -79,7 +82,6 @@ public class PauseController : MonoBehaviour
                 }
             }
         }
-        
     }
 
     public void PauseGoTo(int location)
@@ -167,7 +169,7 @@ public class PauseController : MonoBehaviour
             Time.timeScale = 0f;
             PullPhone();
             StartCooldown();
-            if (!GameManager.instance.isMobile) ActivateMouse(true);
+            ShowCursor(); // Sempre mostra o cursor quando pausa
             phoneButton.enabled = false;
             pauseLocation = 1;
             EnableButtons();
@@ -175,7 +177,7 @@ public class PauseController : MonoBehaviour
             gameTime.gameObject.SetActive(false);
             score.gameObject.SetActive(false);
             if (GameManager.instance.isMobile) mobileUI.gameObject.SetActive(false);
-        }  
+        }
     }
 
     public void Resume()
@@ -186,14 +188,14 @@ public class PauseController : MonoBehaviour
             Time.timeScale = 1f;
             PushPhone();
             StartCooldown();
-            if (!GameManager.instance.isMobile) ActivateMouse(false);
+            HideCursor(); // Sempre esconde o cursor quando resume
             phoneButton.enabled = true;
             DisableButtons();
             pauseLocation = 0;
 
             gameTime.gameObject.SetActive(true);
             score.gameObject.SetActive(true);
-            if (GameManager.instance.isMobile)mobileUI.gameObject.SetActive(true);
+            if (GameManager.instance.isMobile) mobileUI.gameObject.SetActive(true);
         }
     }
 
@@ -221,18 +223,16 @@ public class PauseController : MonoBehaviour
         if (currentCooldown < 0f) isCooldown = false;
     }
 
-    private void ActivateMouse(bool activate)
+    private void ShowCursor()
     {
-        if (activate)
-        {
-            UnityEngine.Cursor.visible = true;
-            UnityEngine.Cursor.lockState = CursorLockMode.None;
-        }
-        else
-        {
-            UnityEngine.Cursor.visible = false;
-            UnityEngine.Cursor.lockState = CursorLockMode.Locked;
-        }
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+    }
+
+    private void HideCursor()
+    {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     public void RestartGame()
@@ -248,10 +248,5 @@ public class PauseController : MonoBehaviour
         GameManager.instance.EndGame(score);
         PauseGoTo(1);
         Resume();
-        
     }
-
-
-
-
 }

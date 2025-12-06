@@ -74,6 +74,9 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     private Vector3 moveVelocity;
     private Vector3 lastPos;
 
+    // Flag para notificar o sistema de instruções apenas uma vez
+    private bool hasNotifiedMovement = false;
+
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
@@ -175,6 +178,16 @@ public class PlayerMovementThirdPerson : MonoBehaviour
         camRight.Normalize();
 
         Vector3 inputDir = (camForward * vertical + camRight * horizontal);
+
+        // Notifica o sistema de instruções que o jogador se moveu
+        if (!hasNotifiedMovement && inputDir.magnitude > 0.1f)
+        {
+            hasNotifiedMovement = true;
+            if (InstructionalTextController.Instance != null)
+            {
+                InstructionalTextController.Instance.NotifyPlayerMoved();
+            }
+        }
 
         // --- 2. Rotação do Personagem ---
         if (inputDir.magnitude > 0.1f)
@@ -302,5 +315,13 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     {
         moveVelocity = Vector3.zero;
         velocity = Vector3.zero;
+    }
+    /// <summary>
+    /// Reseta a flag de notificação de movimento. Deve ser chamado quando o jogo reinicia.
+    /// </summary>
+    public void ResetMovementNotification()
+    {
+        hasNotifiedMovement = false;
+        Debug.Log("[PlayerMovement] Movement notification reset");
     }
 }

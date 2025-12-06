@@ -8,7 +8,7 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Pedra
-    second: {fileID: -876546973899608171, guid: f9aad82cf1d0fea4a8f06512aac60d26, type: 3}
+    second: {fileID: 2100000, guid: a0ce19778142b8d42ba37b11cd737590, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

@@ -23,6 +23,9 @@ public class UIManager : MonoBehaviour
     public Slider musicSlider;
     public Slider effectsSlider;
 
+    // Referência para o controlador de instruções
+    private InstructionalTextController instructionalController;
+
     private void Awake()
     {
         if (instance == null)
@@ -42,6 +45,12 @@ public class UIManager : MonoBehaviour
         mobileHUD = transform.Find("GameUI/MobileUI");
         joystick = GameObject.Find("GameUI/MobileUI/Joystick").GetComponent<Joystick>();
         jumpButton = GameObject.Find("GameUI/MobileUI/Jump").GetComponent<Button>();
+
+        // Encontra o controlador de instruções na cena
+        if (gameUI != null)
+        {
+            instructionalController = gameUI.GetComponentInChildren<InstructionalTextController>(true);
+        }
 
         if (!transition.gameObject.activeInHierarchy) transition.gameObject.SetActive(true);
         if (SceneManager.GetActiveScene().name == "Game" && gameUI.gameObject.activeInHierarchy == false) gameUI.gameObject.SetActive(true);
@@ -63,6 +72,12 @@ public class UIManager : MonoBehaviour
 
         effectsSlider.onValueChanged.RemoveAllListeners();
         effectsSlider.onValueChanged.AddListener(AudioManager.Instance.SetVolumeEffects);
+
+        // Inicia a sequência de instruções se o controlador existir e estiver na cena do jogo
+        if (SceneManager.GetActiveScene().name == "Game" && instructionalController != null)
+        {
+            StartCoroutine(instructionalController.MainInstructionSequence());
+        }
     }
 
     public void TimesUp(bool activate)

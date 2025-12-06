@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Cinemachine;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -34,11 +35,21 @@ public class PlayerCollisionDetection : MonoBehaviour
     private int currentAreaCollected = 0;
     private bool isRespawningFromWater = false;
 
+    // Referência para a câmera virtual do jogador
+    private CinemachineCamera playerVirtualCamera;
+
     private void Start()
     {
         deliveryController = GameObject.Find("Mailboxes").GetComponent<DeliveryController>();
         playerRespawn = GetComponent<PlayerRespawn>();
         animationController = GetComponentInChildren<PlayerAnimationController>(); // Pega a referência
+
+        // Encontra a câmera virtual do jogador na cena
+        playerVirtualCamera = FindFirstObjectByType<CinemachineCamera>();
+        if (playerVirtualCamera == null)
+        {
+            Debug.LogWarning("Nenhuma CinemachineCamera encontrada na cena.", this);
+        }
 
         GetAvailableAreaCollectables();
     }
@@ -89,6 +100,13 @@ public class PlayerCollisionDetection : MonoBehaviour
                 {
                     AudioManager.Instance.PlaySFX("Collectable");
                 }
+
+                // Notifica o sistema de instruções que uma engrenagem foi coletada
+                if (InstructionalTextController.Instance != null)
+                {
+                    InstructionalTextController.Instance.NotifyGearCollected();
+                }
+
                 if (data.area == (int)deliveryController.currentArea)
                 {
                     currentAreaCollected++;
@@ -127,23 +145,39 @@ public class PlayerCollisionDetection : MonoBehaviour
     {
         isRespawningFromWater = true;
 
+        // Desativa a câmera virtual para parar de seguir o jogador
+        if (playerVirtualCamera != null)
+        {
+            playerVirtualCamera.enabled = false;
+        }
+
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlaySFX("WaterSplash");
         }
-        // Inicializa o ParticleSystem do pulo
+
         if (waterSplashVFX != null)
         {
+            // Pega o ParticleSystem do VFX
             water = waterSplashVFX.GetComponentInChildren<ParticleSystem>();
-        }
-        if (waterSplashVFX != null)
-        {
-            water.Play();
+            if (water != null)
+            {
+                // Move o VFX para a posição do jogador antes de tocar
+                water.transform.position = transform.position;
+                water.Play();
+            }
         }
 
         yield return new WaitForSeconds(waterRespawnDelay);
 
         playerRespawn.RespawnPlayer();
+
+        // Reativa a câmera virtual após o respawn
+        if (playerVirtualCamera != null)
+        {
+            playerVirtualCamera.enabled = true;
+        }
+
         isRespawningFromWater = false;
     }
 

@@ -21,10 +21,8 @@ public class GoalTrigger : MonoBehaviour
 
     void Start()
     {
-        // Garante que o collider é um trigger
         GetComponent<Collider>().isTrigger = true;
 
-        // Encontra o ScoreController na cena
         scoreController = FindFirstObjectByType<ScoreController>();
         if (scoreController == null)
         {
@@ -34,11 +32,8 @@ public class GoalTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Verifica se o objeto que entrou no trigger tem o nome correto ("Ball")
         if (other.gameObject.name == ballObjectName)
         {
-            
-
             // 1. Adiciona pontos ao placar
             if (scoreController != null)
             {
@@ -57,8 +52,11 @@ public class GoalTrigger : MonoBehaviour
                 Instantiate(goalVFX, transform.position, Quaternion.identity);
             }
 
-            
-            
+            // 4. Notifica o sistema de instruções que um gol foi marcado
+            if (InstructionalTextController.Instance != null)
+            {
+                InstructionalTextController.Instance.NotifyGoalScored();
+            }
         }
     }
 }
