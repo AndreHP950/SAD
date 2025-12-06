@@ -43,19 +43,7 @@ public class GameManager : MonoBehaviour
 
         if(isMobile) Application.targetFrameRate = 60;
     }
-    public void Update()
-    {
-        //if (Input.GetKeyDown(KeyCode.Alpha0))
-        //{
-        //    character = (int)Character.Cat;
-        //    Debug.Log($"[CHEAT] Trocou para Gato");
-        //}
-        //else if (Input.GetKeyDown(KeyCode.Alpha1))
-        //{
-        //    character = (int)Character.Dog;
-        //    Debug.Log($"[CHEAT] Trocou para Cachorro");
-        //}
-    }
+
     public void StartGame()
     {
         StartCoroutine(StartGameEvents());

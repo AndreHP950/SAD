@@ -1,29 +1,9 @@
 fileFormatVersion: 2
-guid: 7765f20c99770bd4f864cf5ab9ea1763
+guid: e922ca0a8ff0fc34c805e525998d1fd8
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: GlassVertex
-    second: {fileID: 2100000, guid: 54de7a7ca37facd449bba8cfcae30ffe, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: MetalVertex
-    second: {fileID: 2100000, guid: 4c55dca4c8b0a514e9d3ad5592dc368b, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: OutsideDetail
-    second: {fileID: 2100000, guid: 6407e25c9f9d7934ca75e187d9832485, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: OutsideWall
-    second: {fileID: 2100000, guid: ba59d6700db0d5142bc6d5452b2527ef, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0

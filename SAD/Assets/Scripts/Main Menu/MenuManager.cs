@@ -86,7 +86,7 @@ public class MenuManager : MonoBehaviour
     {
         if (Input.anyKeyDown)
         {
-            MenuGoTo(1);
+            logoToMenuCutscene.Play();
         }
     }
 
@@ -158,24 +158,20 @@ public class MenuManager : MonoBehaviour
 
     #endregion
 
-    //IEnumerator LogoToMenuCutscene()
-    //{
-    //    cameraList[menuLocation].enabled = false;
-    //    logoToMenuCutscene.Play();
-    //    yield return new WaitForSeconds(4.0f);
-    //    MenuGoTo(1);
-    //}
+    IEnumerator LogoToMenuCutscene()
+    {
+        logoToMenuCutscene.Play();
+        yield return new WaitForSeconds(4.0f);
+    }
 
     public void MenuGoTo(int location)
     {
         DisableButtons();
         cameraList[location].enabled = true;
         cameraList[menuLocation].enabled = false;
-        //cameraList[location].Prioritize();
         menuLocation = location;
         EnableButtons();
 
-        if (location == 1) mainMenuMaskAnimator.SetTrigger("TurnOn");
         GetSliderValues();
     }
 
@@ -251,5 +247,10 @@ public class MenuManager : MonoBehaviour
                 break;
         }
         GameManager.instance.StartGame();
+    }
+
+    public void TurnOnComputer()
+    {
+        mainMenuMaskAnimator.SetTrigger("TurnOn");
     }
 }
