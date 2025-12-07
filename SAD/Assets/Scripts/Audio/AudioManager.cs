@@ -131,7 +131,6 @@ public class AudioManager : MonoBehaviour
         // Assumindo que a cena de jogo se chama "Game" 
         else if (scene.name == "Game")
         {
-            PlayLoopingSound(ambienceSource, "TrafficSound");
             PlayLoopingSound(musicSource, "GameThemeSong");
         }
     }

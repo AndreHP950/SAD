@@ -152,7 +152,6 @@ GameObject:
   - component: {fileID: 5812506224447801252}
   - component: {fileID: 2076690513186303235}
   - component: {fileID: 5337654835463512037}
-  - component: {fileID: -2858233377381105252}
   m_Layer: 3
   m_Name: Felicia
   m_TagString: Player
@@ -217,7 +216,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 20
-  acceleration: 10
+  acceleration: 5
   deceleration: 8
   rotationSpeed: 15
   minigameSpeed: 10
@@ -408,14 +407,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95a17f34dd8f2a6498f6b4b4f639ec18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!81 &-2858233377381105252
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 925524478360155604}
-  m_Enabled: 1
 --- !u!1 &2166370461734095390
 GameObject:
   m_ObjectHideFlags: 0
