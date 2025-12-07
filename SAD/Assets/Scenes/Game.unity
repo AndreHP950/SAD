@@ -42911,7 +42911,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a514d7ed4d5a9446ad308480615ad96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxTime: 50
+  maxTime: 300
   currentTime: 0
   matchTimer: {fileID: 379247493}
   deliveryController: {fileID: 0}
