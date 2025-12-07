@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -23,8 +22,9 @@ public class UIManager : MonoBehaviour
     public Slider musicSlider;
     public Slider effectsSlider;
 
-    // Referência para o controlador de instruções
-    private InstructionalTextController instructionalController;
+    [Header("Instructional Text")]
+    [Tooltip("Referência ao controlador de instruções dentro do GameUI.")]
+    public InstructionalTextController instructionalTextController;
 
     private void Awake()
     {
@@ -46,20 +46,29 @@ public class UIManager : MonoBehaviour
         joystick = GameObject.Find("GameUI/MobileUI/Joystick").GetComponent<Joystick>();
         jumpButton = GameObject.Find("GameUI/MobileUI/Jump").GetComponent<Button>();
 
-        // Encontra o controlador de instruções na cena
+        // Encontra o InstructionalTextController
         if (gameUI != null)
         {
-            instructionalController = gameUI.GetComponentInChildren<InstructionalTextController>(true);
+            instructionalTextController = gameUI.GetComponentInChildren<InstructionalTextController>(true);
         }
 
         if (!transition.gameObject.activeInHierarchy) transition.gameObject.SetActive(true);
-        if (SceneManager.GetActiveScene().name == "Game" && gameUI.gameObject.activeInHierarchy == false) gameUI.gameObject.SetActive(true);
-        else if (SceneManager.GetActiveScene().name == "MainMenu") gameUI.gameObject.SetActive(false);
+
+        // NÃO desativa o GameUI aqui - deixa o OnSceneLoaded cuidar disso
+        // Isso evita conflitos de ativação/desativação
 
         if (!GameManager.instance.isMobile)
         {
             mobileHUD.gameObject.SetActive(false);
         }
+
+        // Registra callback para mudança de cena
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void Start()
@@ -73,11 +82,72 @@ public class UIManager : MonoBehaviour
         effectsSlider.onValueChanged.RemoveAllListeners();
         effectsSlider.onValueChanged.AddListener(AudioManager.Instance.SetVolumeEffects);
 
-        // Inicia a sequência de instruções se o controlador existir e estiver na cena do jogo
-        if (SceneManager.GetActiveScene().name == "Game" && instructionalController != null)
+        // Configura estado inicial baseado na cena atual
+        ConfigureUIForScene(SceneManager.GetActiveScene().name);
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Debug.Log($"[UIManager] Scene loaded: {scene.name}");
+        ConfigureUIForScene(scene.name);
+    }
+
+    private void ConfigureUIForScene(string sceneName)
+    {
+        if (sceneName == "Game")
         {
-            StartCoroutine(instructionalController.MainInstructionSequence());
+            // Ativa o GameUI
+            if (gameUI != null && !gameUI.gameObject.activeSelf)
+            {
+                gameUI.gameObject.SetActive(true);
+            }
+
+            // Inicia o sistema de instruções com delay
+            StartCoroutine(StartInstructionalSystemDelayed());
         }
+        else if (sceneName == "MainMenu")
+        {
+            // Desativa o GameUI no menu
+            if (gameUI != null && gameUI.gameObject.activeSelf)
+            {
+                gameUI.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private IEnumerator StartInstructionalSystemDelayed()
+    {
+        // Espera um tempo fixo para garantir que tudo está inicializado
+        yield return new WaitForSecondsRealtime(0.1f);
+
+        StartInstructionalSystem();
+    }
+
+    private void StartInstructionalSystem()
+    {
+        // Tenta encontrar o controller se não tiver referência
+        if (instructionalTextController == null && gameUI != null)
+        {
+            instructionalTextController = gameUI.GetComponentInChildren<InstructionalTextController>(true);
+        }
+
+        if (instructionalTextController == null)
+        {
+            Debug.LogWarning("[UIManager] InstructionalTextController not found!");
+            return;
+        }
+
+        Debug.Log("[UIManager] Starting instructional system");
+
+        // Garante que o objeto está ativo
+        if (!instructionalTextController.gameObject.activeSelf)
+        {
+            instructionalTextController.gameObject.SetActive(true);
+        }
+
+        // Reseta e inicia a sequência
+        instructionalTextController.ResetAllState();
+        instructionalTextController.StartCoroutine(instructionalTextController.MainInstructionSequence());
     }
 
     public void TimesUp(bool activate)

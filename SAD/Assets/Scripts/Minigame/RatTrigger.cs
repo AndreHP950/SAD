@@ -76,7 +76,8 @@ public class ChaseMinigameTrigger : MonoBehaviour
             if (target != null)
             {
                 minigameStarted = true;
-                controller.StartChaseMinigame(target);
+                // Passa o tipo de alvo: 0 = rato (gato), 1 = galinha (cachorro)
+                controller.StartChaseMinigame(target, requiredCharacter);
             }
         }
     }
