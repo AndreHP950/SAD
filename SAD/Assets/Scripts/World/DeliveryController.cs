@@ -69,6 +69,7 @@ public class DeliveryController : MonoBehaviour
     private int areasCompleted = 0;
     public Transform[] areaStartingPoints;
     private int nextAreaValue;
+    public GameObject[] areaBridges;
     public enum PlayableAreas { Area1 = 1, Area2 = 2, Area3 = 3, All = 4 };
 
 
@@ -572,7 +573,7 @@ public class DeliveryController : MonoBehaviour
         minimapTargetIndicator.target = areaStartingPoints[nextAreaValue];
         areaStartingPoints[nextAreaValue].gameObject.SetActive(true);
 
-        //Add bridge lowering animation
+        areaBridges[nextAreaValue].gameObject.GetComponent<Animator>().SetTrigger("Activate");
 
         mailboxes.Clear();
 
