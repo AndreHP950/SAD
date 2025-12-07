@@ -3,7 +3,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(AudioSource))] // Garante que sempre haverá um AudioSource
+[RequireComponent(typeof(AudioSource))]
 public class TrafficVehicleSpline : MonoBehaviour
 {
     public enum VehicleType { Car, Bus }
@@ -80,6 +80,14 @@ public class TrafficVehicleSpline : MonoBehaviour
     [Tooltip("Tempo que o player precisa ficar na frente para a buzina começar.")]
     public float timeToStartHonking = 2.0f;
 
+    [Header("Player Push (Campo Magnético)")]
+    [Tooltip("Força horizontal do empurrão no player.")]
+    public float playerPushForce = 8f;
+    [Tooltip("Força vertical do empurrão (para cima).")]
+    public float playerPushUpForce = 4f;
+    [Tooltip("Cooldown entre empurrões (evita spam).")]
+    public float pushCooldown = 0.5f;
+
     [Header("Ground Snap")]
     [Tooltip("Layer(s) do terreno/rua.")]
     public LayerMask groundMask = 1 << 0;
@@ -129,6 +137,9 @@ public class TrafficVehicleSpline : MonoBehaviour
     // Timers para a nova lógica da buzina
     float stationaryTimer = 0f;
     float nextHonkTimer = 0f;
+
+    // Cooldown do empurrão
+    float lastPushTime = -10f;
 
     readonly Collider[] depenBuffer = new Collider[16];
     readonly RaycastHit[] sensorBuffer = new RaycastHit[16];
@@ -537,16 +548,83 @@ public class TrafficVehicleSpline : MonoBehaviour
         return proposedPos;
     }
 
+    void OnCollisionEnter(Collision collision)
+    {
+        // Empurra o player quando encosta no carro
+        if (collision.collider.gameObject.layer == playerLayer && playerLayer >= 0)
+        {
+            PushPlayer(collision);
+        }
+    }
+
     void OnCollisionStay(Collision collision)
     {
         touchingSomething = true;
         bool isPlayerCol = collision.collider.gameObject.layer == playerLayer && playerLayer >= 0;
         bool isVehicleCol = collision.collider.GetComponentInParent<TrafficVehicleSpline>() != null;
+        
         if (isPlayerCol || isVehicleCol)
         {
             touchingPlayerOrVehicle = true;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+
+            // Continua empurrando o player se ainda estiver em contato (com cooldown)
+            if (isPlayerCol)
+            {
+                PushPlayer(collision);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Empurra o player para longe do carro (efeito "campo magnético").
+    /// </summary>
+    private void PushPlayer(Collision collision)
+    {
+        // Verifica cooldown
+        if (Time.time - lastPushTime < pushCooldown) return;
+        lastPushTime = Time.time;
+
+        // Tenta pegar o CharacterController do player
+        CharacterController playerCC = collision.collider.GetComponent<CharacterController>();
+        if (playerCC == null)
+            playerCC = collision.collider.GetComponentInParent<CharacterController>();
+
+        if (playerCC == null) return;
+
+        // Calcula direção do empurrão: do centro do carro para o player
+        Vector3 carCenter = transform.position;
+        Vector3 playerPos = playerCC.transform.position;
+        Vector3 pushDirection = (playerPos - carCenter);
+        pushDirection.y = 0; // Ignora Y para direção horizontal
+        pushDirection.Normalize();
+
+        // Se a direção for muito pequena (player bem no centro), usa a direção oposta ao forward do carro
+        if (pushDirection.sqrMagnitude < 0.01f)
+        {
+            pushDirection = -transform.forward;
+            pushDirection.y = 0;
+            pushDirection.Normalize();
+        }
+
+        // Calcula a força do empurrão baseada na velocidade do carro
+        float speedFactor = Mathf.Clamp01(currentSpeed / maxSpeed) + 0.5f; // Mínimo 0.5, máximo 1.5
+        
+        // Vetor final do empurrão
+        Vector3 pushVector = pushDirection * playerPushForce * speedFactor;
+        pushVector.y = playerPushUpForce; // Adiciona componente vertical
+
+        // Aplica o movimento via PlayerMovementThirdPerson se disponível
+        PlayerMovementThirdPerson playerMovement = playerCC.GetComponent<PlayerMovementThirdPerson>();
+        if (playerMovement != null)
+        {
+            playerMovement.ApplyExternalForce(pushVector);
+        }
+        else
+        {
+            // Fallback: move diretamente o CharacterController
+            playerCC.Move(pushVector * Time.fixedDeltaTime);
         }
     }
 

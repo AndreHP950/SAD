@@ -77,6 +77,11 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     // Flag para notificar o sistema de instruções apenas uma vez
     private bool hasNotifiedMovement = false;
 
+    // Força externa aplicada (empurrão de carros, etc.)
+    private Vector3 externalForce = Vector3.zero;
+    private float externalForceDuration = 0.3f;
+    private float externalForceTimer = 0f;
+
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
@@ -234,6 +239,19 @@ public class PlayerMovementThirdPerson : MonoBehaviour
             finalMove += slideDir * slideSpeed;
         }
 
+        // Aplica força externa (empurrão de carros)
+        if (externalForceTimer > 0)
+        {
+            float forceFactor = externalForceTimer / externalForceDuration;
+            finalMove += externalForce * forceFactor;
+            externalForceTimer -= Time.deltaTime;
+
+            if (externalForceTimer <= 0)
+            {
+                externalForce = Vector3.zero;
+            }
+        }
+
         characterController.Move(finalMove * Time.deltaTime);
     }
 
@@ -316,6 +334,7 @@ public class PlayerMovementThirdPerson : MonoBehaviour
         moveVelocity = Vector3.zero;
         velocity = Vector3.zero;
     }
+
     /// <summary>
     /// Reseta a flag de notificação de movimento. Deve ser chamado quando o jogo reinicia.
     /// </summary>
@@ -323,5 +342,15 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     {
         hasNotifiedMovement = false;
         Debug.Log("[PlayerMovement] Movement notification reset");
+    }
+
+    /// <summary>
+    /// Aplica uma força externa ao player (ex: empurrão de carro).
+    /// A força é aplicada gradualmente ao longo de um curto período.
+    /// </summary>
+    public void ApplyExternalForce(Vector3 force)
+    {
+        externalForce = force;
+        externalForceTimer = externalForceDuration;
     }
 }

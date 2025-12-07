@@ -69,6 +69,7 @@ public class DeliveryController : MonoBehaviour
     private int areasCompleted = 0;
     public Transform[] areaStartingPoints;
     private int nextAreaValue;
+    public GameObject[] areaBridges;
     public enum PlayableAreas { Area1 = 1, Area2 = 2, Area3 = 3, All = 4 };
 
 
@@ -572,7 +573,7 @@ public class DeliveryController : MonoBehaviour
         minimapTargetIndicator.target = areaStartingPoints[nextAreaValue];
         areaStartingPoints[nextAreaValue].gameObject.SetActive(true);
 
-        //Add bridge lowering animation
+        areaBridges[nextAreaValue].gameObject.GetComponent<Animator>().SetTrigger("Activate");
 
         mailboxes.Clear();
 
@@ -581,6 +582,12 @@ public class DeliveryController : MonoBehaviour
             mailboxes.AddRange(mailboxesArea1);
             mailboxes.AddRange(mailboxesArea2);
             mailboxes.AddRange(mailboxesArea3);
+
+            // Notifica que o mapa inteiro foi liberado!
+            if (InstructionalTextController.Instance != null)
+            {
+                InstructionalTextController.Instance.NotifyFullMapUnlocked();
+            }
         }
         else
         {
