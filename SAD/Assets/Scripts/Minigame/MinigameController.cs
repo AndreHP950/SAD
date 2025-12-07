@@ -79,9 +79,6 @@ public class MinigameController : MonoBehaviour
     private float currentPitch = 0f;
     private float currentYaw = 0f;
 
-    // Tipo de alvo atual (0 = rato/gato, 1 = galinha/cachorro)
-    private int currentTargetType = 0;
-
     void Start()
     {
         mainCam = Camera.main;
@@ -108,13 +105,12 @@ public class MinigameController : MonoBehaviour
     }
 
     // Iniciado pelo RatTrigger: apenas recebe o RatAI (que já tem suas splines)
-    public void StartChaseMinigame(ChasableAI target, int targetType = 0)
+    public void StartChaseMinigame(ChasableAI target)
     {
         if (state != MinigameState.Idle) return;
         if (target == null) return;
 
         activeTarget = target;
-        currentTargetType = targetType;
         activeTarget.StartRunning(this);
 
         // pega player
@@ -383,21 +379,6 @@ public class MinigameController : MonoBehaviour
 
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
-
-        // Notifica o sistema de instruções sobre o resultado do minigame
-        if (InstructionalTextController.Instance != null)
-        {
-            bool isCat = currentTargetType == 0; // 0 = rato (gato), 1 = galinha (cachorro)
-
-            if (success)
-            {
-                InstructionalTextController.Instance.NotifyMinigameCatchSuccess(isCat);
-            }
-            else
-            {
-                InstructionalTextController.Instance.NotifyMinigameTargetEscaped(isCat);
-            }
-        }
 
         if (success && playerMovement != null)
             playerMovement.ActivateSpeedBoost(speedBoostDuration, speedBoostMultiplier);

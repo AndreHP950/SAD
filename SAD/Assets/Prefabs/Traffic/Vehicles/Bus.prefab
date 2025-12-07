@@ -164,9 +164,6 @@ MonoBehaviour:
   brakeSmokVFX: {fileID: 3805595607141728958}
   brakeSmokMinDecel: 5
   timeToStartHonking: 2
-  playerPushForce: 8
-  playerPushUpForce: 4
-  pushCooldown: 0.5
   groundMask:
     serializedVersion: 2
     m_Bits: 64
@@ -200,8 +197,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3, y: 3, z: 6.75}
-  m_Center: {x: 0, y: 0.38, z: -0.29}
+  m_Size: {x: 3, y: 3, z: 6.34}
+  m_Center: {x: 0, y: 0.38, z: 0}
 --- !u!54 &263435581975491704
 Rigidbody:
   m_ObjectHideFlags: 0

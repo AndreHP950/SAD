@@ -1,14 +1,16 @@
 using System.Collections;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.SocialPlatforms.Impl;
 
 [DefaultExecutionOrder(-100)]
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
     public int matchScore;
-
+    
     [Header("Characters")]
     public AvailableCharacters selectedCharacter;
     public CharacterData[] characterList;
@@ -39,7 +41,7 @@ public class GameManager : MonoBehaviour
     {
         UIManager.instance.UIAnimator.SetTrigger("Open");
 
-        if (isMobile) Application.targetFrameRate = 60;
+        if(isMobile) Application.targetFrameRate = 60;
     }
 
     public void StartGame()
@@ -79,26 +81,10 @@ public class GameManager : MonoBehaviour
 
         isLoadingScene = false;
 
-        // Configura mobile HUD
-        UIManager.instance.mobileHUD.gameObject.SetActive(isMobile);
+        UIManager.instance.mobileHUD.gameObject.SetActive(GameManager.instance.isMobile);
+        UIManager.instance.gameUI.gameObject.SetActive(true);
 
-        // Configura o AudioSource do player
-        GameObject player = GameObject.FindWithTag("Player");
-        if (player != null)
-        {
-            var audioSource = player.GetComponent<AudioSource>();
-            if (audioSource != null)
-            {
-                AudioManager.Instance.sfxSource = audioSource;
-            }
-
-            // Reseta a notificação de movimento do player
-            var movement = player.GetComponent<PlayerMovementThirdPerson>();
-            if (movement != null)
-            {
-                movement.ResetMovementNotification();
-            }
-        }
+        AudioManager.Instance.sfxSource = GameObject.FindWithTag("Player").GetComponent<AudioSource>();
 
         yield return new WaitForSeconds(1f);
         UIManager.instance.UIAnimator.SetTrigger("Open");
@@ -111,6 +97,7 @@ public class GameManager : MonoBehaviour
         if (isExiting) yield return new WaitForSeconds(4f);
         UIManager.instance.UIAnimator.SetTrigger("Close");
         yield return new WaitForSeconds(2f);
+        UIManager.instance.gameUI.gameObject.SetActive(false);
 
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("MainMenu", LoadSceneMode.Single);
         while (!asyncLoad.isDone)

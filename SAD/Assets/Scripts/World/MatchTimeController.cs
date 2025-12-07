@@ -1,6 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class MatchTimeController : MonoBehaviour
 {
@@ -11,12 +12,6 @@ public class MatchTimeController : MonoBehaviour
     [SerializeField] DeliveryController deliveryController;
     [SerializeField] ScoreController scoreController;
 
-    [Header("Aviso de Tempo")]
-    [Tooltip("Tempo restante para mostrar o aviso.")]
-    public float warningTime = 20f;
-    
-    private bool hasShownTimeWarning = false;
-
     void Start()
     {
         matchTimer = UIManager.instance.gameUI.transform.Find("GameTime").GetComponent<TextMeshProUGUI>();
@@ -24,7 +19,6 @@ public class MatchTimeController : MonoBehaviour
         deliveryController = GetComponent<DeliveryController>();
         scoreController = GameObject.Find("Mailboxes").GetComponent<ScoreController>();
         currentTime = maxTime;
-        hasShownTimeWarning = false;
     }
 
     void Update()
@@ -34,13 +28,6 @@ public class MatchTimeController : MonoBehaviour
             currentTime -= Time.deltaTime;
             matchTimer.text = currentTime.ToString("F0");
             pauseMatchTimer.text = currentTime.ToString("F0");
-
-            // Verifica se deve mostrar o aviso de tempo
-            if (!hasShownTimeWarning && currentTime <= warningTime)
-            {
-                hasShownTimeWarning = true;
-                ShowTimeWarning();
-            }
         }
         else
         {
@@ -48,14 +35,6 @@ public class MatchTimeController : MonoBehaviour
             matchTimer.text = currentTime.ToString("F0");
             pauseMatchTimer.text = currentTime.ToString("F0");
             TimeEnd();
-        }
-    }
-
-    void ShowTimeWarning()
-    {
-        if (InstructionalTextController.Instance != null)
-        {
-            InstructionalTextController.Instance.NotifyTimeRunningOut();
         }
     }
 
