@@ -581,6 +581,12 @@ public class DeliveryController : MonoBehaviour
             mailboxes.AddRange(mailboxesArea1);
             mailboxes.AddRange(mailboxesArea2);
             mailboxes.AddRange(mailboxesArea3);
+
+            // Notifica que o mapa inteiro foi liberado!
+            if (InstructionalTextController.Instance != null)
+            {
+                InstructionalTextController.Instance.NotifyFullMapUnlocked();
+            }
         }
         else
         {
