@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Felicia
   m_EditorClassIdentifier: 
   characterName: Felicia
-  characterPrefab: {fileID: 925524478360155604, guid: 64465ee4f4265404f876eed489f07348, type: 3}
+  characterPrefab: {fileID: 925524478360155604, guid: 2268cff5f03feae44a8546740130eaa0, type: 3}
   characterIcon: {fileID: 21300000, guid: c064789710ee132428e631ce002e6a62, type: 3}
   animalType: 0
   spawnPosition: {x: -195, y: 5, z: -168}

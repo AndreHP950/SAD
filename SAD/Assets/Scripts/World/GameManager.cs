@@ -8,6 +8,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
     public int matchScore;
+    public int completedDeliveries;
 
     [Header("Characters")]
     public AvailableCharacters selectedCharacter;
@@ -126,7 +127,16 @@ public class GameManager : MonoBehaviour
         TextMeshProUGUI finalScoreText = GameObject.Find("Menus/Results/Score").GetComponent<TextMeshProUGUI>();
         finalScoreText.text = matchScore.ToString();
 
-        MenuRecordsManager menuRecords = GameObject.Find("SAD Central Block/RecordsPlates").GetComponent<MenuRecordsManager>();
+        TextMeshProUGUI finalDeliveryCount = GameObject.Find("Menus/Results/DeliveriesScore").GetComponent<TextMeshProUGUI>();
+        finalDeliveryCount.text = completedDeliveries.ToString();
+
+        ResultsRankManager resultRank = GameObject.Find("Menus/Results/Rank").GetComponent<ResultsRankManager>();
+        if (matchScore < 30000) resultRank.NewRanking(0);
+        else if (matchScore >= 30000 && matchScore < 60000) resultRank.NewRanking(1);
+        else if (matchScore >= 60000 && matchScore < 100000) resultRank.NewRanking(2);
+        else resultRank.NewRanking(3);
+
+            MenuRecordsManager menuRecords = GameObject.Find("SAD Central Block/RecordsPlates").GetComponent<MenuRecordsManager>();
         menuRecords.UpdateRanking(selectedCharacter, matchScore);
 
         UIManager.instance.UIAnimator.SetTrigger("Open");

@@ -102,7 +102,7 @@ public class MenuManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            MenuGoTo(1);
+            GoResultsToMain();
         }
     }
 
@@ -142,7 +142,7 @@ public class MenuManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            MenuGoTo(1);
+            GoCharToMain();
         }
 
         if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
@@ -157,11 +157,42 @@ public class MenuManager : MonoBehaviour
     }
 
     #endregion
-
-    IEnumerator LogoToMenuCutscene()
+    public void GoResultsToMain()
     {
-        logoToMenuCutscene.Play();
-        yield return new WaitForSeconds(4.0f);
+        StartCoroutine(ResultsToMain());
+    }
+    
+    IEnumerator ResultsToMain()
+    {
+        MenuGoTo(9);
+        yield return new WaitForSeconds(1.0f);
+        MenuGoTo(1);
+        yield return new WaitForSeconds(1.0f);
+        TurnOnComputer();
+    }
+
+    public void GoMainToChar()
+    {
+        StartCoroutine(MainToChar());
+    }
+
+    IEnumerator MainToChar()
+    {
+        MenuGoTo(10);
+        yield return new WaitForSeconds(1.0f);
+        MenuGoTo(7);
+    }
+
+    public void GoCharToMain()
+    {
+        StartCoroutine(CharToMain());
+    }
+
+    IEnumerator CharToMain()
+    {
+        MenuGoTo(10);
+        yield return new WaitForSeconds(1.0f);
+        MenuGoTo(1);
     }
 
     public void MenuGoTo(int location)

@@ -66,10 +66,11 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     public Transform fpvCameraPivot;
 
     // Componentes e Estado
-    CharacterController characterController;
+    public CharacterController characterController;
     public PlayerInputManager playerInputManager;
     private PlayerAnimationController animationController;
     public bool isMoving = true;
+    public bool isJumping = false;
     private Vector3 velocity;
     private Vector3 moveVelocity;
     private Vector3 lastPos;
@@ -127,8 +128,9 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     {
         HandlePowerUpTimer();
         Movement();
-        UpdateVelocity();
         HandleSmokeTrail();
+
+        if (characterController.isGrounded) isJumping = false;
     }
 
     private void HandlePowerUpTimer()
@@ -214,6 +216,8 @@ public class PlayerMovementThirdPerson : MonoBehaviour
         // --- 4. Movimento Vertical (Pulo e Gravidade) ---
         if (playerInputManager.GetJump() && characterController.isGrounded)
         {
+            isJumping = true;
+
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
 
             // Animação de pulo
@@ -255,14 +259,12 @@ public class PlayerMovementThirdPerson : MonoBehaviour
         characterController.Move(finalMove * Time.deltaTime);
     }
 
-    private void UpdateVelocity()
+    public float UpdateVelocity()
     {
-        float speedValue = (transform.position - lastPos).magnitude / Time.deltaTime * 3.6f;
-        if (speedText != null)
-        {
-            speedText.text = ("Speed: " + (int)speedValue + " Km/h");
-        }
+        Vector3 delta = transform.position - lastPos;
+        float speedValue = delta.magnitude / Time.deltaTime * 3.6f;
         lastPos = transform.position;
+        return speedValue;
     }
 
     private bool CheckSlope(out Vector3 slideDirection)
@@ -352,5 +354,13 @@ public class PlayerMovementThirdPerson : MonoBehaviour
     {
         externalForce = force;
         externalForceTimer = externalForceDuration;
+    }
+
+    public bool IsGroundedPrecise()
+    {
+        float rayDistance = 0.2f;
+        Vector3 origin = transform.position + Vector3.up * 0.1f;
+
+        return Physics.Raycast(origin, Vector3.down, rayDistance);
     }
 }
