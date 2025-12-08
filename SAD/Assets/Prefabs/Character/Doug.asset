@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: Doug
   characterPrefab: {fileID: 925524478360155604, guid: 3ce706feec08a074b81d3113b1d4081a, type: 3}
-  characterIcon: {fileID: 0}
+  characterIcon: {fileID: 21300000, guid: d421c81bd8dd12d46bcd7e07b22cd228, type: 3}
   animalType: 1
   spawnPosition: {x: -68, y: 5, z: 148}
   spawnRotation: {x: 0, y: -1, z: 0, w: -0.00000004371139}
