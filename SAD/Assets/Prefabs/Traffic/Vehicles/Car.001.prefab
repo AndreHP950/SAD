@@ -112,7 +112,7 @@ MonoBehaviour:
   acceleration: 5
   obstacleMask:
     serializedVersion: 2
-    m_Bits: 2056
+    m_Bits: 67592
   sensorShape: 0
   sensorOrigin: {fileID: 8362346958743501582}
   sensorLength: 6
@@ -133,6 +133,9 @@ MonoBehaviour:
   brakeSmokVFX: {fileID: 4227396418304842006}
   brakeSmokMinDecel: 5
   timeToStartHonking: 2
+  playerPushForce: 8
+  playerPushUpForce: 4
+  pushCooldown: 0.5
   groundMask:
     serializedVersion: 2
     m_Bits: 64

@@ -143,7 +143,7 @@ MonoBehaviour:
   acceleration: 8
   obstacleMask:
     serializedVersion: 2
-    m_Bits: 2056
+    m_Bits: 67592
   sensorShape: 0
   sensorOrigin: {fileID: 7149032561175835670}
   sensorLength: 6
