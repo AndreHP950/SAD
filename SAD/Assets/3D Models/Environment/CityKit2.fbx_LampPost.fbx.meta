@@ -3,7 +3,17 @@ guid: 79d96b6cfa8b3204c90ae0189ccfdd7f
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: LampPostMaterial
+    second: {fileID: 2100000, guid: fe8a3b1e2c2c65b46bff4c09012ee51d, type: 2}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: EletricPoleImg
+    second: {fileID: 2800000, guid: 5fb504a19a062e345889b6ef4ab42a31, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
