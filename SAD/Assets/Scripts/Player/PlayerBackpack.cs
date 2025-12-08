@@ -26,6 +26,7 @@ public class PlayerBackpack : MonoBehaviour
     private Transform deliveryTarget;
     private bool isMovingToSlot = false;
     private bool isMovingToMailbox = false;
+    public bool isRightSide = true;
 
     // Referência ao controlador de animação
     private PlayerAnimationController animationController;
@@ -91,7 +92,6 @@ public class PlayerBackpack : MonoBehaviour
 
         // Decide o lado e slot
         activePackageSlot = null;
-        bool isRightSide = true;
 
         Vector3 dirToPackage = package.transform.position - transform.position;
         dirToPackage.y = 0f;

@@ -87,6 +87,7 @@ public class DeliveryController : MonoBehaviour
         matchTimeController = GetComponent<MatchTimeController>();
 
         currentArea = (PlayableAreas)((int)GameManager.instance.CurrentCharacter.startArea);
+        GameManager.instance.completedDeliveries = 0;
 
         GetMailboxes();
         if (mailboxes.Count > 1) CreateDelivery(-1);
@@ -302,6 +303,7 @@ public class DeliveryController : MonoBehaviour
     {
         if (scoring)
         {
+            GameManager.instance.completedDeliveries++;
             Debug.Log($"Ended Delivery: {boxNumber}");
             if (AudioManager.Instance != null)
                 AudioManager.Instance.PlaySFX("DeliverySuccess");
