@@ -244,8 +244,10 @@ MonoBehaviour:
   cameraTransform: {fileID: 0}
   speedText: {fileID: 3357903691229661032}
   fpvCameraPivot: {fileID: 0}
+  characterController: {fileID: 0}
   playerInputManager: {fileID: 0}
   isMoving: 1
+  isJumping: 0
 --- !u!114 &4224580151866358703
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -283,6 +285,7 @@ MonoBehaviour:
   destroyVisualAfterCollect: 1
   collectPickupScale: 0.006
   collectVisualLifetime: 1
+  isRightSide: 1
 --- !u!82 &5812506224447801252
 AudioSource:
   m_ObjectHideFlags: 0
