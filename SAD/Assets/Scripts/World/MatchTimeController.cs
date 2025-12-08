@@ -14,7 +14,7 @@ public class MatchTimeController : MonoBehaviour
     [Header("Aviso de Tempo")]
     [Tooltip("Tempo restante para mostrar o aviso.")]
     public float warningTime = 20f;
-    
+
     private bool hasShownTimeWarning = false;
 
     void Start()
@@ -29,6 +29,13 @@ public class MatchTimeController : MonoBehaviour
 
     void Update()
     {
+        // Cheat: Pressione Enter para setar o tempo para 500
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            currentTime = 500f;
+            hasShownTimeWarning = false; // Reseta o aviso de tempo
+        }
+
         if (currentTime > 0)
         {
             currentTime -= Time.deltaTime;
