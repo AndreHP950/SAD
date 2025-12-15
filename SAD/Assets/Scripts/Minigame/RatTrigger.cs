@@ -16,8 +16,13 @@ public class ChaseMinigameTrigger : MonoBehaviour
     [Tooltip("Define qual personagem pode ativar (0=Gato, 1=Cachorro)")]
     public int requiredCharacter = 0; // 0=Gato (rato), 1=Cachorro (galinha)
 
+    [Header("Marker Visual")]
+    [Tooltip("Nome do filho que contém o marker visual. Se vazio, usa 'MarkerYellow'.")]
+    public string markerChildName = "MarkerYellow";
+
     private bool minigameStarted = false;
     private SphereCollider sphereCollider;
+    private Transform markerTransform;
 
     void Reset()
     {
@@ -34,6 +39,34 @@ public class ChaseMinigameTrigger : MonoBehaviour
         sphereCollider = GetComponent<SphereCollider>();
         sphereCollider.isTrigger = true;
         UpdateColliderRadius();
+
+        // Encontra o marker no pai (ChasableAI)
+        var target = GetComponentInParent<ChasableAI>();
+        if (target != null)
+        {
+            markerTransform = target.transform.Find(markerChildName);
+        }
+    }
+
+    void Start()
+    {
+        // Atualiza a visibilidade do marker baseado no personagem atual
+        UpdateMarkerVisibility();
+    }
+
+    void UpdateMarkerVisibility()
+    {
+        if (markerTransform == null) return;
+
+        bool shouldShowMarker = false;
+
+        if (GameManager.instance != null)
+        {
+            // Mostra o marker apenas se o personagem atual for o correto
+            shouldShowMarker = (int)GameManager.instance.CurrentCharacter.animalType == requiredCharacter;
+        }
+
+        markerTransform.gameObject.SetActive(shouldShowMarker);
     }
 
     void OnValidate()
@@ -76,6 +109,10 @@ public class ChaseMinigameTrigger : MonoBehaviour
             if (target != null)
             {
                 minigameStarted = true;
+                // Esconde o marker quando o minigame começa
+                if (markerTransform != null)
+                    markerTransform.gameObject.SetActive(false);
+
                 // Passa o tipo de alvo: 0 = rato (gato), 1 = galinha (cachorro)
                 controller.StartChaseMinigame(target, requiredCharacter);
             }
@@ -86,5 +123,7 @@ public class ChaseMinigameTrigger : MonoBehaviour
     public void OnMinigameEnded()
     {
         minigameStarted = false;
+        // Restaura a visibilidade do marker
+        UpdateMarkerVisibility();
     }
 }

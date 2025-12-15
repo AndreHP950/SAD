@@ -26,6 +26,11 @@ public class UIManager : MonoBehaviour
     [Tooltip("Referência ao controlador de instruções dentro do GameUI.")]
     public InstructionalTextController instructionalTextController;
 
+    [Header("HUD Toggle")]
+    [Tooltip("Tecla para esconder/mostrar o HUD.")]
+    public KeyCode hudToggleKey = KeyCode.F1;
+    private bool isHudVisible = true;
+
     private void Awake()
     {
         if (instance == null)
@@ -86,6 +91,34 @@ public class UIManager : MonoBehaviour
         ConfigureUIForScene(SceneManager.GetActiveScene().name);
     }
 
+    private void Update()
+    {
+        // Toggle HUD com F1
+        if (Input.GetKeyDown(hudToggleKey))
+        {
+            ToggleHUD();
+        }
+    }
+
+    private void ToggleHUD()
+    {
+        if (gameUI == null) return;
+
+        isHudVisible = !isHudVisible;
+        gameUI.gameObject.SetActive(isHudVisible);
+    }
+
+    /// <summary>
+    /// Define a visibilidade do HUD manualmente.
+    /// </summary>
+    public void SetHUDVisible(bool visible)
+    {
+        if (gameUI == null) return;
+
+        isHudVisible = visible;
+        gameUI.gameObject.SetActive(isHudVisible);
+    }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Debug.Log($"[UIManager] Scene loaded: {scene.name}");
@@ -96,8 +129,8 @@ public class UIManager : MonoBehaviour
     {
         if (sceneName == "Game")
         {
-            // Ativa o GameUI
-            if (gameUI != null && !gameUI.gameObject.activeSelf)
+            // Ativa o GameUI (respeita o estado do toggle)
+            if (gameUI != null && isHudVisible && !gameUI.gameObject.activeSelf)
             {
                 gameUI.gameObject.SetActive(true);
             }
@@ -112,6 +145,8 @@ public class UIManager : MonoBehaviour
             {
                 gameUI.gameObject.SetActive(false);
             }
+            // Reseta o estado do HUD para quando voltar ao jogo
+            isHudVisible = true;
         }
     }
 
